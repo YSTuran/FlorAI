@@ -1,8 +1,14 @@
 import io
+import os
 from pathlib import Path
 
 from fastapi import HTTPException, status
 from PIL import Image, UnidentifiedImageError
+
+_yolo_config_dir = Path(__file__).resolve().parents[1] / ".ultralytics"
+_yolo_config_dir.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("YOLO_CONFIG_DIR", str(_yolo_config_dir))
+
 from ultralytics import YOLO
 
 from .flower_catalog import get_flower_by_model_label, get_flower_id_for_model_label

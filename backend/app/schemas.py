@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class FlowerInfo(BaseModel):
@@ -20,12 +22,25 @@ class PredictionItem(BaseModel):
     confidence: float
 
 
-class PredictResponse(BaseModel):
-    prediction: PredictionItem
-    topPredictions: list[PredictionItem]
-    flower: FlowerInfo | None
+class PredictionResult(BaseModel):
+    flowerId: str | None
+    classId: int
+    modelLabel: str
+    name: str
+    scientificName: str | None = None
+    confidence: float
     lowConfidence: bool
-    userId: str
+    height: str | None = None
+    habitats: list[str] = Field(default_factory=list)
+    bloomMonths: list[str] = Field(default_factory=list)
+    details: str | None = None
+    extraFacts: list[str] = Field(default_factory=list)
+
+
+class PredictResponse(BaseModel):
+    status: Literal["success", "low_confidence"]
+    predictionId: str | None = None
+    result: PredictionResult
 
 
 class HealthResponse(BaseModel):
@@ -33,3 +48,4 @@ class HealthResponse(BaseModel):
     modelLoaded: bool
     classCount: int
     classes: list[str]
+    firestoreEnabled: bool

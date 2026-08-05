@@ -1,10 +1,10 @@
-import json
 from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import Header, HTTPException, status
 
 from .config import get_settings
+from .firebase_client import initialize_firebase_app
 
 
 @dataclass(frozen=True)
@@ -12,34 +12,6 @@ class CurrentUser:
     uid: str
     email: str | None
     email_verified: bool
-
-
-def _initialize_firebase_app() -> None:
-    try:
-        import firebase_admin
-        from firebase_admin import credentials
-    except ImportError as exc:
-        raise RuntimeError(
-            "firebase-admin is required when FIREBASE_AUTH_REQUIRED=true"
-        ) from exc
-
-    if firebase_admin._apps:
-        return
-
-    settings = get_settings()
-    if settings.firebase_credentials_json:
-        firebase_admin.initialize_app(
-            credentials.Certificate(json.loads(settings.firebase_credentials_json))
-        )
-        return
-
-    if settings.firebase_service_account_path:
-        firebase_admin.initialize_app(
-            credentials.Certificate(settings.firebase_service_account_path)
-        )
-        return
-
-    firebase_admin.initialize_app()
 
 
 async def get_current_user(
@@ -63,7 +35,7 @@ async def get_current_user(
         )
 
     try:
-        _initialize_firebase_app()
+        initialize_firebase_app()
         from firebase_admin import auth
 
         decoded_token = auth.verify_id_token(token)

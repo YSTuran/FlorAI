@@ -4,9 +4,14 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, 
 
 from .auth import CurrentUser, get_current_user
 from .config import get_settings
+from .firestore_repository import FirestoreRepository
 from .flower_catalog import get_flower_by_model_label
 from .model_service import FlowerClassifier
-from .schemas import HealthResponse, PredictResponse
+from .schemas import (
+    HealthResponse,
+    PredictResponse,
+    PredictionResult,
+)
 
 
 @asynccontextmanager
@@ -18,6 +23,7 @@ async def lifespan(app: FastAPI):
     )
     classifier.load()
     app.state.classifier = classifier
+    app.state.firestore_repository = FirestoreRepository()
     yield
 
 
@@ -28,13 +34,19 @@ def get_classifier(request: Request) -> FlowerClassifier:
     return request.app.state.classifier
 
 
+def get_firestore_repository(request: Request) -> FirestoreRepository:
+    return request.app.state.firestore_repository
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health(classifier: FlowerClassifier = Depends(get_classifier)) -> HealthResponse:
+    settings = get_settings()
     return HealthResponse(
         status="ok",
         modelLoaded=classifier.is_loaded,
         classCount=len(classifier.names),
         classes=list(classifier.names.values()),
+        firestoreEnabled=settings.firestore_enabled,
     )
 
 
@@ -43,6 +55,7 @@ async def predict(
     image: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
     classifier: FlowerClassifier = Depends(get_classifier),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
 ) -> PredictResponse:
     settings = get_settings()
 
@@ -68,12 +81,33 @@ async def predict(
 
     predictions = classifier.predict(image_bytes=image_bytes, top_k=settings.top_k)
     best_prediction = predictions[0]
-    flower = get_flower_by_model_label(best_prediction.modelLabel)
+    flower = firestore_repository.get_flower(best_prediction.flowerId)
+    if flower is None:
+        flower = get_flower_by_model_label(best_prediction.modelLabel)
+
+    low_confidence = best_prediction.confidence < settings.confidence_threshold
+    prediction_id = firestore_repository.create_prediction_history(
+        user=current_user,
+        best_prediction=best_prediction,
+        top_predictions=predictions,
+        low_confidence=low_confidence,
+    )
 
     return PredictResponse(
-        prediction=best_prediction,
-        topPredictions=predictions,
-        flower=flower,
-        lowConfidence=best_prediction.confidence < settings.confidence_threshold,
-        userId=current_user.uid,
+        status="low_confidence" if low_confidence else "success",
+        predictionId=prediction_id,
+        result=PredictionResult(
+            flowerId=best_prediction.flowerId,
+            classId=best_prediction.classId,
+            modelLabel=best_prediction.modelLabel,
+            name=flower.commonName if flower else best_prediction.displayName,
+            scientificName=flower.scientificName if flower else None,
+            confidence=best_prediction.confidence,
+            lowConfidence=low_confidence,
+            height=flower.height if flower else None,
+            habitats=flower.habitats if flower else [],
+            bloomMonths=flower.bloomMonths if flower else [],
+            details=flower.details if flower else None,
+            extraFacts=flower.extraFacts if flower else [],
+        ),
     )
