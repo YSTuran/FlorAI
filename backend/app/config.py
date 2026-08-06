@@ -7,6 +7,7 @@ from pathlib import Path
 @dataclass(frozen=True)
 class Settings:
     app_name: str
+    backend_root: Path
     model_path: Path
     confidence_threshold: float
     top_k: int
@@ -55,8 +56,19 @@ def get_settings() -> Settings:
     if not model_path.is_absolute():
         model_path = backend_root / model_path
 
+    firebase_service_account_path = (
+        os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+        or os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    )
+    if firebase_service_account_path:
+        service_account_path = Path(firebase_service_account_path)
+        if not service_account_path.is_absolute():
+            service_account_path = backend_root / service_account_path
+        firebase_service_account_path = str(service_account_path)
+
     return Settings(
         app_name=os.getenv("APP_NAME", "FlorAI Backend"),
+        backend_root=backend_root,
         model_path=model_path,
         confidence_threshold=float(os.getenv("PREDICTION_CONFIDENCE_THRESHOLD", "0.60")),
         top_k=int(os.getenv("PREDICTION_TOP_K", "5")),
@@ -65,6 +77,5 @@ def get_settings() -> Settings:
         require_verified_email=_bool_env("REQUIRE_VERIFIED_EMAIL", True),
         firestore_enabled=_bool_env("FIRESTORE_ENABLED", False),
         firebase_credentials_json=os.getenv("FIREBASE_CREDENTIALS_JSON"),
-        firebase_service_account_path=os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
-        or os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
+        firebase_service_account_path=firebase_service_account_path,
     )
