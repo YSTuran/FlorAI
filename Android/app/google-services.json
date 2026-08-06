@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "898081472896",
+    "project_id": "florai-9b233",
+    "storage_bucket": "florai-9b233.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:898081472896:android:cae855d25bb58475b34165",
+        "android_client_info": {
+          "package_name": "yusufs.turan.florai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0RuuFm_S3H_Z7O81M90VPQrZWpp9pjuo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
