@@ -33,13 +33,13 @@ class AuthViewModel(
     }
 
     fun signIn(email: String, password: String) {
-        submitAuth(email, password) {
+        submitAuth(email, password, isRegister = false) {
             authRepository.signIn(email, password, it)
         }
     }
 
     fun register(email: String, password: String) {
-        submitAuth(email, password) {
+        submitAuth(email, password, isRegister = true) {
             authRepository.register(email, password, it)
         }
     }
@@ -55,11 +55,13 @@ class AuthViewModel(
     private fun submitAuth(
         email: String,
         password: String,
+        isRegister: Boolean,
         action: ((Result<Unit>) -> Unit) -> Unit
     ) {
         val trimmedEmail = email.trim()
-        if (trimmedEmail.isBlank() || password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "E-posta ve sifre zorunlu.") }
+        val validationMessage = validateCredentials(trimmedEmail, password, isRegister)
+        if (validationMessage != null) {
+            _uiState.update { it.copy(errorMessage = validationMessage) }
             return
         }
 
@@ -75,5 +77,25 @@ class AuthViewModel(
                 )
             }
         }
+    }
+
+    private fun validateCredentials(
+        email: String,
+        password: String,
+        isRegister: Boolean
+    ): String? {
+        if (email.isBlank() || password.isBlank()) {
+            return "E-posta ve sifre zorunlu."
+        }
+
+        if (!email.contains("@") || !email.contains(".")) {
+            return "Gecerli bir e-posta adresi gir."
+        }
+
+        if (isRegister && password.length < 6) {
+            return "Sifre en az 6 karakter olmali."
+        }
+
+        return null
     }
 }

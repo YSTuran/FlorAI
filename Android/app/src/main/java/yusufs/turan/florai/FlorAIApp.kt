@@ -3,17 +3,26 @@ package yusufs.turan.florai
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import yusufs.turan.florai.ui.auth.AuthScreen
 import yusufs.turan.florai.ui.auth.AuthViewModel
 import yusufs.turan.florai.ui.home.HomeScreen
+import yusufs.turan.florai.ui.prediction.PredictionScreen
+import yusufs.turan.florai.ui.prediction.PredictionViewModel
+import yusufs.turan.florai.ui.settings.SettingsScreen
 
 @Composable
 fun FlorAIApp(
-    authViewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = viewModel(),
+    predictionViewModel: PredictionViewModel = viewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
+    val predictionUiState by predictionViewModel.uiState.collectAsState()
     val currentUser = uiState.currentUser
+    var appDestination by rememberSaveable { mutableStateOf(AppDestination.Home) }
 
     if (currentUser == null) {
         AuthScreen(
@@ -23,9 +32,43 @@ fun FlorAIApp(
             onErrorShown = authViewModel::clearError
         )
     } else {
-        HomeScreen(
-            user = currentUser,
-            onSignOut = authViewModel::signOut
-        )
+        when (appDestination) {
+            AppDestination.Home -> {
+                HomeScreen(
+                    user = currentUser,
+                    onOpenPrediction = { appDestination = AppDestination.Prediction },
+                    onOpenSettings = { appDestination = AppDestination.Settings }
+                )
+            }
+
+            AppDestination.Prediction -> {
+                PredictionScreen(
+                    predictionUiState = predictionUiState,
+                    onImageSelected = predictionViewModel::setSelectedImage,
+                    onPredict = predictionViewModel::predict,
+                    onClearImage = predictionViewModel::clearSelectedImage,
+                    onPredictionErrorShown = predictionViewModel::clearError,
+                    onImageError = predictionViewModel::showError,
+                    onBack = { appDestination = AppDestination.Home }
+                )
+            }
+
+            AppDestination.Settings -> {
+                SettingsScreen(
+                    user = currentUser,
+                    onBack = { appDestination = AppDestination.Home },
+                    onSignOut = {
+                        appDestination = AppDestination.Home
+                        authViewModel.signOut()
+                    }
+                )
+            }
+        }
     }
+}
+
+private enum class AppDestination {
+    Home,
+    Prediction,
+    Settings
 }

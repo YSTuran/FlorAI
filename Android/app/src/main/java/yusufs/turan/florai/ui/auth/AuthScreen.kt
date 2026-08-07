@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -77,7 +76,7 @@ fun AuthScreen(
                             style = MaterialTheme.typography.headlineLarge
                         )
                         Text(
-                            text = "Cicek tanima hesabina giris yap.",
+                            text = if (selectedTab == 0) "Hesabina giris yap" else "Yeni hesap olustur",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -146,18 +145,6 @@ fun AuthScreen(
                             Text(if (selectedTab == 0) "Giris yap" else "Kayit ol")
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = if (selectedTab == 0) {
-                            "Firebase Authentication ile oturum acilir."
-                        } else {
-                            "Yeni hesap olusturulduktan sonra otomatik giris yapilir."
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
         }

@@ -7,9 +7,11 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
+import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import java.util.concurrent.TimeUnit
 
 class FirebaseAuthRepository(
     private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -57,6 +59,13 @@ class FirebaseAuthRepository(
 
     fun signOut() {
         firebaseAuth.signOut()
+    }
+
+    fun getIdToken(): String? {
+        val user = firebaseAuth.currentUser ?: return null
+        return runCatching {
+            Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS).token
+        }.getOrNull()
     }
 
     fun getReadableMessage(error: Throwable): String {

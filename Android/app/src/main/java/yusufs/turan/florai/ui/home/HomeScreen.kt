@@ -2,12 +2,13 @@ package yusufs.turan.florai.ui.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -20,7 +21,8 @@ import yusufs.turan.florai.data.auth.AuthUser
 @Composable
 fun HomeScreen(
     user: AuthUser,
-    onSignOut: () -> Unit,
+    onOpenPrediction: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
@@ -28,37 +30,82 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "FlorAI",
+                    style = MaterialTheme.typography.headlineLarge
+                )
+                Text(
+                    text = user.email ?: "Oturum acik",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            NavigationCard(
+                title = "Tahmin",
+                description = "Galeriden bir cicek gorseli secip model tahmini al.",
+                actionText = "Tahmin ekranina git",
+                onClick = onOpenPrediction
+            )
+
+            NavigationCard(
+                title = "Ayarlar",
+                description = "Hesap ve uygulama ayarlarini yonet.",
+                actionText = "Ayarlara git",
+                onClick = onOpenSettings,
+                outlined = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun NavigationCard(
+    title: String,
+    description: String,
+    actionText: String,
+    onClick: () -> Unit,
+    outlined: Boolean = false
+) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Hos geldin",
-                style = MaterialTheme.typography.headlineMedium
+                text = title,
+                style = MaterialTheme.typography.titleLarge
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = user.email ?: user.uid,
-                style = MaterialTheme.typography.bodyLarge,
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(modifier = Modifier.height(28.dp))
-            Button(
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                enabled = false
-            ) {
-                Text("Tahmin akisina daha sonra gecilecek")
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedButton(
-                onClick = onSignOut,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                Text("Cikis yap")
+            if (outlined) {
+                OutlinedButton(
+                    onClick = onClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(actionText)
+                }
+            } else {
+                Button(
+                    onClick = onClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(actionText)
+                }
             }
         }
     }
