@@ -8,8 +8,11 @@ from .firestore_repository import FirestoreRepository
 from .flower_catalog import get_flower_by_model_label
 from .model_service import FlowerClassifier
 from .schemas import (
+    DeleteResponse,
     HealthResponse,
     PredictResponse,
+    PredictionHistoryItem,
+    PredictionHistoryResponse,
     PredictionResult,
 )
 
@@ -111,3 +114,36 @@ async def predict(
             extraFacts=flower.extraFacts if flower else [],
         ),
     )
+
+
+@app.get("/prediction-history", response_model=PredictionHistoryResponse)
+async def list_prediction_history(
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> PredictionHistoryResponse:
+    items = firestore_repository.list_prediction_history(current_user)
+    return PredictionHistoryResponse(
+        items=[PredictionHistoryItem(**item) for item in items]
+    )
+
+
+@app.delete("/prediction-history/{prediction_id}", response_model=DeleteResponse)
+async def delete_prediction_history_item(
+    prediction_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> DeleteResponse:
+    deleted_count = firestore_repository.delete_prediction_history_item(
+        user=current_user,
+        prediction_id=prediction_id,
+    )
+    return DeleteResponse(deletedCount=deleted_count)
+
+
+@app.delete("/prediction-history", response_model=DeleteResponse)
+async def delete_prediction_history(
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> DeleteResponse:
+    deleted_count = firestore_repository.delete_prediction_history(current_user)
+    return DeleteResponse(deletedCount=deleted_count)

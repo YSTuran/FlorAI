@@ -18,9 +18,13 @@ class PredictionViewModel(
     val uiState: StateFlow<PredictionUiState> = _uiState.asStateFlow()
 
     private var selectedImage: SelectedImage? = null
+    private var selectedImageKey: String? = null
+    private var lastPredictedImageKey: String? = null
 
     fun setSelectedImage(image: SelectedImage) {
+        val imageKey = image.key()
         selectedImage = image
+        selectedImageKey = imageKey
         _uiState.update {
             it.copy(
                 selectedImageName = image.fileName,
@@ -33,6 +37,8 @@ class PredictionViewModel(
 
     fun clearSelectedImage() {
         selectedImage = null
+        selectedImageKey = null
+        lastPredictedImageKey = null
         _uiState.value = PredictionUiState()
     }
 
@@ -47,12 +53,22 @@ class PredictionViewModel(
             return
         }
 
+        if (selectedImageKey == lastPredictedImageKey && _uiState.value.result != null) {
+            _uiState.update {
+                it.copy(errorMessage = "Bu gorsel icin tahmin zaten yapildi. Yeni bir gorsel secerek devam edebilirsin.")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update {
                 it.copy(isPredicting = true, errorMessage = null)
             }
 
             val result = predictionRepository.predict(image)
+            if (result.isSuccess) {
+                lastPredictedImageKey = selectedImageKey
+            }
             _uiState.update { state ->
                 state.copy(
                     isPredicting = false,
@@ -66,5 +82,9 @@ class PredictionViewModel(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    private fun SelectedImage.key(): String {
+        return "$fileName:$sizeBytes:${bytes.contentHashCode()}"
     }
 }

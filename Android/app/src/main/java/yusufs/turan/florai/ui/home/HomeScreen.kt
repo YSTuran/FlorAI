@@ -22,6 +22,7 @@ import yusufs.turan.florai.data.auth.AuthUser
 fun HomeScreen(
     user: AuthUser,
     onOpenPrediction: () -> Unit,
+    onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -50,6 +51,14 @@ fun HomeScreen(
                 description = "Galeriden bir cicek gorseli secip model tahmini al.",
                 actionText = "Tahmin ekranina git",
                 onClick = onOpenPrediction
+            )
+
+            NavigationCard(
+                title = "Tahmin Gecmisi",
+                description = "Daha once yaptigin tahminleri gor ve kayitlarini yonet.",
+                actionText = "Gecmise git",
+                onClick = onOpenHistory,
+                outlined = true
             )
 
             NavigationCard(

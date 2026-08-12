@@ -43,6 +43,25 @@ class PredictResponse(BaseModel):
     result: PredictionResult
 
 
+class PredictionHistoryItem(BaseModel):
+    id: str
+    predictedFlowerId: str | None = None
+    displayName: str
+    modelLabel: str
+    classId: int
+    confidence: float
+    lowConfidence: bool
+    createdAt: str | None = None
+
+
+class PredictionHistoryResponse(BaseModel):
+    items: list[PredictionHistoryItem]
+
+
+class DeleteResponse(BaseModel):
+    deletedCount: int
+
+
 class HealthResponse(BaseModel):
     status: str
     modelLoaded: bool

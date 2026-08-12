@@ -13,13 +13,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -145,6 +144,7 @@ fun PredictionScreen(
                 selectedImageName = predictionUiState.selectedImageName,
                 selectedImageSizeBytes = predictionUiState.selectedImageSizeBytes,
                 isPredicting = predictionUiState.isPredicting,
+                hasResult = predictionUiState.result != null,
                 onPickImage = {
                     imagePicker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -170,6 +170,7 @@ private fun ImagePickerCard(
     selectedImageName: String?,
     selectedImageSizeBytes: Int?,
     isPredicting: Boolean,
+    hasResult: Boolean,
     onPickImage: () -> Unit,
     onClearImage: () -> Unit,
     onPredict: () -> Unit
@@ -261,6 +262,8 @@ private fun ImagePickerCard(
                         )
                         Text("Tahmin ediliyor")
                     }
+                } else if (hasResult) {
+                    Text("Tahmin tamamlandi")
                 } else {
                     Text("Tahmin et")
                 }
@@ -269,7 +272,6 @@ private fun ImagePickerCard(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PredictionResultCard(result: PredictionResult) {
     Card(
@@ -306,6 +308,28 @@ private fun PredictionResultCard(result: PredictionResult) {
                     confidence = result.confidence,
                     lowConfidence = result.lowConfidence
                 )
+            }
+
+            if (result.lowConfidence) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "Dusuk guvenli tahmin",
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Model bu sonuc icin yeterince emin degil. Daha net, iyi aydinlatilmis ve cicegi merkeze alan bir fotografla tekrar deneyebilirsin.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
             }
 
             result.height?.let {
@@ -390,17 +414,19 @@ private fun InfoRow(label: String, value: String) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InfoChips(label: String, values: List<String>) {
+    val chipScrollState = rememberScrollState()
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = label,
             style = MaterialTheme.typography.titleSmall
         )
-        FlowRow(
+        Row(
+            modifier = Modifier.horizontalScroll(chipScrollState),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             values.forEach { value ->
                 Surface(

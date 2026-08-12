@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import yusufs.turan.florai.ui.auth.AuthScreen
 import yusufs.turan.florai.ui.auth.AuthViewModel
+import yusufs.turan.florai.ui.history.PredictionHistoryScreen
+import yusufs.turan.florai.ui.history.PredictionHistoryViewModel
 import yusufs.turan.florai.ui.home.HomeScreen
 import yusufs.turan.florai.ui.prediction.PredictionScreen
 import yusufs.turan.florai.ui.prediction.PredictionViewModel
@@ -17,10 +19,12 @@ import yusufs.turan.florai.ui.settings.SettingsScreen
 @Composable
 fun FlorAIApp(
     authViewModel: AuthViewModel = viewModel(),
-    predictionViewModel: PredictionViewModel = viewModel()
+    predictionViewModel: PredictionViewModel = viewModel(),
+    predictionHistoryViewModel: PredictionHistoryViewModel = viewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
     val predictionUiState by predictionViewModel.uiState.collectAsState()
+    val predictionHistoryUiState by predictionHistoryViewModel.uiState.collectAsState()
     val currentUser = uiState.currentUser
     var appDestination by rememberSaveable { mutableStateOf(AppDestination.Home) }
 
@@ -37,6 +41,7 @@ fun FlorAIApp(
                 HomeScreen(
                     user = currentUser,
                     onOpenPrediction = { appDestination = AppDestination.Prediction },
+                    onOpenHistory = { appDestination = AppDestination.History },
                     onOpenSettings = { appDestination = AppDestination.Settings }
                 )
             }
@@ -50,6 +55,17 @@ fun FlorAIApp(
                     onPredictionErrorShown = predictionViewModel::clearError,
                     onImageError = predictionViewModel::showError,
                     onBack = { appDestination = AppDestination.Home }
+                )
+            }
+
+            AppDestination.History -> {
+                PredictionHistoryScreen(
+                    uiState = predictionHistoryUiState,
+                    onBack = { appDestination = AppDestination.Home },
+                    onRefresh = predictionHistoryViewModel::loadHistory,
+                    onDeleteItem = predictionHistoryViewModel::deleteItem,
+                    onDeleteAll = predictionHistoryViewModel::deleteAll,
+                    onErrorShown = predictionHistoryViewModel::clearError
                 )
             }
 
@@ -70,5 +86,6 @@ fun FlorAIApp(
 private enum class AppDestination {
     Home,
     Prediction,
+    History,
     Settings
 }
