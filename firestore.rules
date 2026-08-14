@@ -1,0 +1,58 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isHistoryOwner() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isCreatingOwnHistory() {
+      return isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'userId',
+          'userEmail',
+          'predictedFlowerId',
+          'displayName',
+          'modelLabel',
+          'classId',
+          'confidence',
+          'lowConfidence',
+          'topPredictions',
+          'source',
+          'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'userId',
+          'predictedFlowerId',
+          'displayName',
+          'modelLabel',
+          'classId',
+          'confidence',
+          'lowConfidence',
+          'source',
+          'createdAt'
+        ]);
+    }
+
+    match /flowers/{flowerId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    match /predictionHistory/{predictionId} {
+      allow get, list: if isHistoryOwner();
+      allow create: if isCreatingOwnHistory();
+      allow update: if false;
+      allow delete: if isHistoryOwner();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

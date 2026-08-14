@@ -10,6 +10,9 @@ import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
 import yusufs.turan.florai.data.prediction.remote.PredictionApi
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.io.IOException
 
 class PredictionRepository(
@@ -67,6 +70,9 @@ class PredictionRepository(
                 503 -> "Firestore baglantisi su anda kullanilamiyor."
                 else -> "Sunucu yaniti alinamadi. Kod: ${error.code()}"
             }
+            is SocketTimeoutException -> "Backend yanit vermekte gecikti. Lutfen tekrar dene."
+            is ConnectException -> "Backend'e ulasilamadi. Sunucunun calistigini ve telefonun ayni agda oldugunu kontrol et."
+            is UnknownHostException -> "Backend adresi bulunamadi. API adresini ve internet baglantisini kontrol et."
             is IOException -> "Backend baglantisi kurulamadi. Internetini ve sunucunun calistigini kontrol et."
             else -> error.localizedMessage ?: "Islem tamamlanamadi."
         }

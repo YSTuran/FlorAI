@@ -1,7 +1,11 @@
-fastapi>=0.115
-uvicorn[standard]>=0.30
-python-multipart>=0.0.9
-ultralytics>=8.0
-pillow>=10.0
-firebase-admin>=6.5
-python-dotenv>=1.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+python-multipart==0.0.32
+torch==2.13.0+cpu
+torchvision==0.28.0+cpu
+ultralytics==8.4.115
+pillow==12.3.0
+firebase-admin==7.5.0
+python-dotenv==1.2.2

@@ -5,6 +5,8 @@ from .config import get_settings
 from .firebase_client import get_firestore_client
 from .schemas import FlowerInfo, PredictionItem
 
+MAX_HISTORY_ITEMS = 50
+
 
 def _model_to_dict(model) -> dict:
     if hasattr(model, "model_dump"):
@@ -76,32 +78,39 @@ class FirestoreRepository:
         if not self.is_enabled:
             return []
 
-        docs = (
-            self._client()
-            .collection("predictionHistory")
-            .where("userId", "==", user.uid)
-            .stream()
-        )
+        from google.cloud.firestore_v1.base_query import FieldFilter
 
-        history_items: list[dict] = []
-        for doc in docs:
-            data = doc.to_dict() or {}
-            created_at = data.get("createdAt")
-            if hasattr(created_at, "isoformat"):
-                created_at = created_at.isoformat()
+        try:
+            docs = self._client().collection("predictionHistory").where(
+                filter=FieldFilter("userId", "==", user.uid)
+            ).limit(MAX_HISTORY_ITEMS).stream()
 
-            history_items.append(
-                {
-                    "id": doc.id,
-                    "predictedFlowerId": data.get("predictedFlowerId"),
-                    "displayName": data.get("displayName") or "Bilinmeyen cicek",
-                    "modelLabel": data.get("modelLabel") or "",
-                    "classId": int(data.get("classId") or 0),
-                    "confidence": float(data.get("confidence") or 0),
-                    "lowConfidence": bool(data.get("lowConfidence") or False),
-                    "createdAt": created_at,
-                }
-            )
+            history_items: list[dict] = []
+            for doc in docs:
+                data = doc.to_dict() or {}
+                created_at = data.get("createdAt")
+                if hasattr(created_at, "isoformat"):
+                    created_at = created_at.isoformat()
+
+                history_items.append(
+                    {
+                        "id": doc.id,
+                        "predictedFlowerId": data.get("predictedFlowerId"),
+                        "displayName": data.get("displayName") or "Bilinmeyen cicek",
+                        "modelLabel": data.get("modelLabel") or "",
+                        "classId": int(data.get("classId") or 0),
+                        "confidence": float(data.get("confidence") or 0),
+                        "lowConfidence": bool(data.get("lowConfidence") or False),
+                        "createdAt": created_at,
+                    }
+                )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
 
         return sorted(
             history_items,
@@ -113,8 +122,17 @@ class FirestoreRepository:
         if not self.is_enabled:
             return 0
 
-        doc_ref = self._client().collection("predictionHistory").document(prediction_id)
-        doc = doc_ref.get()
+        try:
+            doc_ref = self._client().collection("predictionHistory").document(prediction_id)
+            doc = doc_ref.get()
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
+
         if not doc.exists:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -128,7 +146,13 @@ class FirestoreRepository:
                 detail="You can only delete your own prediction history.",
             )
 
-        doc_ref.delete()
+        try:
+            doc_ref.delete()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
         return 1
 
     def delete_prediction_history(self, user: CurrentUser) -> int:
@@ -136,23 +160,31 @@ class FirestoreRepository:
             return 0
 
         client = self._client()
-        docs = (
-            client.collection("predictionHistory")
-            .where("userId", "==", user.uid)
-            .stream()
-        )
+        from google.cloud.firestore_v1.base_query import FieldFilter
 
-        deleted_count = 0
-        batch = client.batch()
-        for doc in docs:
-            batch.delete(doc.reference)
-            deleted_count += 1
+        try:
+            docs = client.collection("predictionHistory").where(
+                filter=FieldFilter("userId", "==", user.uid)
+            ).stream()
 
-            if deleted_count % 450 == 0:
+            deleted_count = 0
+            batch = client.batch()
+            for doc in docs:
+                batch.delete(doc.reference)
+                deleted_count += 1
+
+                if deleted_count % 450 == 0:
+                    batch.commit()
+                    batch = client.batch()
+
+            if deleted_count % 450:
                 batch.commit()
-                batch = client.batch()
-
-        if deleted_count % 450:
-            batch.commit()
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
 
         return deleted_count

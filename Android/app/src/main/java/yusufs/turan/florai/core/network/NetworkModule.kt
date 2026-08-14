@@ -7,6 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import yusufs.turan.florai.BuildConfig
 import yusufs.turan.florai.data.prediction.PredictionRepository
 import yusufs.turan.florai.data.prediction.remote.PredictionApi
+import java.util.concurrent.TimeUnit
 
 object NetworkModule {
     private val tokenProvider: AuthTokenProvider by lazy {
@@ -23,6 +24,9 @@ object NetworkModule {
         }
 
         OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(45, TimeUnit.SECONDS)
+            .writeTimeout(45, TimeUnit.SECONDS)
             .addInterceptor(AuthInterceptor(tokenProvider))
             .addInterceptor(loggingInterceptor)
             .build()
