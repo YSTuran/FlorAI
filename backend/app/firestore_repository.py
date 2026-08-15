@@ -65,6 +65,7 @@ class FirestoreRepository:
                 "classId": best_prediction.classId,
                 "confidence": best_prediction.confidence,
                 "lowConfidence": low_confidence,
+                "imageUrl": "",
                 "topPredictions": [
                     _model_to_dict(prediction) for prediction in top_predictions
                 ],
@@ -91,6 +92,9 @@ class FirestoreRepository:
                 created_at = data.get("createdAt")
                 if hasattr(created_at, "isoformat"):
                     created_at = created_at.isoformat()
+                image_url = data.get("imageUrl")
+                if not isinstance(image_url, str) or not image_url.strip():
+                    image_url = None
 
                 history_items.append(
                     {
@@ -101,6 +105,8 @@ class FirestoreRepository:
                         "classId": int(data.get("classId") or 0),
                         "confidence": float(data.get("confidence") or 0),
                         "lowConfidence": bool(data.get("lowConfidence") or False),
+                        "imageUrl": image_url,
+                        "topPredictions": data.get("topPredictions") or [],
                         "createdAt": created_at,
                     }
                 )

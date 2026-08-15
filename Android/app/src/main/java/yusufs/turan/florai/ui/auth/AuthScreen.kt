@@ -37,12 +37,13 @@ import androidx.compose.ui.unit.dp
 fun AuthScreen(
     uiState: AuthUiState,
     onSignIn: (String, String) -> Unit,
-    onRegister: (String, String) -> Unit,
+    onRegister: (String, String, String) -> Unit,
     onErrorShown: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    var displayName by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
@@ -95,6 +96,17 @@ fun AuthScreen(
                         )
                     }
 
+                    if (selectedTab == 1) {
+                        OutlinedTextField(
+                            value = displayName,
+                            onValueChange = { displayName = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !uiState.isSubmitting,
+                            singleLine = true,
+                            label = { Text("Kullanici ismi") }
+                        )
+                    }
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -121,7 +133,7 @@ fun AuthScreen(
                             if (selectedTab == 0) {
                                 onSignIn(email, password)
                             } else {
-                                onRegister(email, password)
+                                onRegister(displayName, email, password)
                             }
                         },
                         modifier = Modifier

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,12 +37,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
+import yusufs.turan.florai.ui.common.BackNavigationIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PredictionHistoryScreen(
     uiState: PredictionHistoryUiState,
     onBack: () -> Unit,
+    onOpenDetails: (PredictionHistoryItem) -> Unit,
     onRefresh: () -> Unit,
     onDeleteItem: (String) -> Unit,
     onDeleteAll: () -> Unit,
@@ -86,13 +89,8 @@ fun PredictionHistoryScreen(
                             Text("Tumunu sil")
                         }
                     }
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.padding(end = 12.dp)
-                    ) {
-                        Text("Geri")
-                    }
                 },
+                navigationIcon = { BackNavigationIcon(onBack = onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -126,6 +124,7 @@ fun PredictionHistoryScreen(
                             HistoryItemCard(
                                 item = item,
                                 isDeleting = uiState.isDeleting,
+                                onOpenDetails = { onOpenDetails(item) },
                                 onDelete = { itemPendingDelete = item }
                             )
                         }
@@ -186,6 +185,7 @@ fun PredictionHistoryScreen(
 private fun HistoryItemCard(
     item: PredictionHistoryItem,
     isDeleting: Boolean,
+    onOpenDetails: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -200,6 +200,13 @@ private fun HistoryItemCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            PredictionHistoryImage(
+                imageUrl = item.imageUrl,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -231,6 +238,13 @@ private fun HistoryItemCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
+            }
+
+            Button(
+                onClick = onOpenDetails,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Detaylari goster")
             }
 
             OutlinedButton(
@@ -296,12 +310,4 @@ private fun EmptyHistory(
             Text("Yenile")
         }
     }
-}
-
-private fun String?.toDisplayDate(): String {
-    if (isNullOrBlank()) return "Tarih bilgisi yok"
-    return replace("T", " ")
-        .substringBefore(".")
-        .substringBefore("+")
-        .take(16)
 }

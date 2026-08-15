@@ -8,5 +8,15 @@ data class PredictionHistoryItem(
     val classId: Int,
     val confidence: Float,
     val lowConfidence: Boolean,
+    val imageUrl: String?,
+    val topPredictions: List<PredictionScore>,
     val createdAt: String?
+)
+
+data class PredictionScore(
+    val classId: Int,
+    val modelLabel: String,
+    val flowerId: String?,
+    val displayName: String,
+    val confidence: Float
 )

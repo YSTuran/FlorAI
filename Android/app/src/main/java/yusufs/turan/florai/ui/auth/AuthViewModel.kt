@@ -38,9 +38,10 @@ class AuthViewModel(
         }
     }
 
-    fun register(email: String, password: String) {
-        submitAuth(email, password, isRegister = true) {
-            authRepository.register(email, password, it)
+    fun register(displayName: String, email: String, password: String) {
+        val trimmedDisplayName = displayName.trim()
+        submitAuth(email, password, trimmedDisplayName, isRegister = true) {
+            authRepository.register(trimmedDisplayName, email, password, it)
         }
     }
 
@@ -55,11 +56,17 @@ class AuthViewModel(
     private fun submitAuth(
         email: String,
         password: String,
+        displayName: String = "",
         isRegister: Boolean,
         action: ((Result<Unit>) -> Unit) -> Unit
     ) {
         val trimmedEmail = email.trim()
-        val validationMessage = validateCredentials(trimmedEmail, password, isRegister)
+        val validationMessage = validateCredentials(
+            email = trimmedEmail,
+            password = password,
+            displayName = displayName,
+            isRegister = isRegister
+        )
         if (validationMessage != null) {
             _uiState.update { it.copy(errorMessage = validationMessage) }
             return
@@ -72,6 +79,11 @@ class AuthViewModel(
         action { result ->
             _uiState.update { state ->
                 state.copy(
+                    currentUser = if (result.isSuccess) {
+                        authRepository.currentUser
+                    } else {
+                        state.currentUser
+                    },
                     isSubmitting = false,
                     errorMessage = result.exceptionOrNull()?.let(authRepository::getReadableMessage)
                 )
@@ -82,10 +94,19 @@ class AuthViewModel(
     private fun validateCredentials(
         email: String,
         password: String,
+        displayName: String,
         isRegister: Boolean
     ): String? {
         if (email.isBlank() || password.isBlank()) {
             return "E-posta ve sifre zorunlu."
+        }
+
+        if (isRegister && displayName.isBlank()) {
+            return "Kullanici ismi zorunlu."
+        }
+
+        if (isRegister && displayName.length < 2) {
+            return "Kullanici ismi en az 2 karakter olmali."
         }
 
         if (!email.contains("@") || !email.contains(".")) {

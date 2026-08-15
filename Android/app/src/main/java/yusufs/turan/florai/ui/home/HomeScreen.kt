@@ -40,7 +40,9 @@ fun HomeScreen(
                     style = MaterialTheme.typography.headlineLarge
                 )
                 Text(
-                    text = user.email ?: "Oturum acik",
+                    text = user.displayName?.takeIf { it.isNotBlank() }
+                        ?: user.email
+                        ?: "Oturum acik",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

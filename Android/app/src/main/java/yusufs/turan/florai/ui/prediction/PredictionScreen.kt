@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
+import yusufs.turan.florai.ui.common.BackNavigationIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,14 +118,7 @@ fun PredictionScreen(
                         )
                     }
                 },
-                actions = {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.padding(end = 12.dp)
-                    ) {
-                        Text("Geri")
-                    }
-                },
+                navigationIcon = { BackNavigationIcon(onBack = onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -286,28 +280,18 @@ private fun PredictionResultCard(result: PredictionResult) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = result.name,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    result.scientificName?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                ConfidenceBadge(
-                    confidence = result.confidence,
-                    lowConfidence = result.lowConfidence
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = result.name,
+                    style = MaterialTheme.typography.headlineSmall
                 )
+                result.scientificName?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             if (result.lowConfidence) {
@@ -367,35 +351,6 @@ private fun PredictionResultCard(result: PredictionResult) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ConfidenceBadge(
-    confidence: Float,
-    lowConfidence: Boolean
-) {
-    val containerColor = if (lowConfidence) {
-        MaterialTheme.colorScheme.errorContainer
-    } else {
-        MaterialTheme.colorScheme.primaryContainer
-    }
-    val contentColor = if (lowConfidence) {
-        MaterialTheme.colorScheme.onErrorContainer
-    } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
-    }
-
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = containerColor,
-        contentColor = contentColor
-    ) {
-        Text(
-            text = "${(confidence * 100).toInt()}%",
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.labelLarge
-        )
     }
 }
 

@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.android.gms.tasks.Tasks
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -43,17 +44,40 @@ class FirebaseAuthRepository(
     }
 
     fun register(
+        displayName: String,
         email: String,
         password: String,
         onResult: (Result<Unit>) -> Unit
     ) {
         firebaseAuth.createUserWithEmailAndPassword(email.trim(), password)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onResult(Result.success(Unit))
-                } else {
+                if (!task.isSuccessful) {
                     onResult(Result.failure(task.exception ?: IllegalStateException()))
+                    return@addOnCompleteListener
                 }
+
+                val user = task.result?.user ?: firebaseAuth.currentUser
+                if (user == null) {
+                    onResult(Result.success(Unit))
+                    return@addOnCompleteListener
+                }
+
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(displayName.trim())
+                    .build()
+
+                user.updateProfile(profileUpdates)
+                    .addOnCompleteListener { profileTask ->
+                        if (profileTask.isSuccessful) {
+                            onResult(Result.success(Unit))
+                        } else {
+                            onResult(
+                                Result.failure(
+                                    profileTask.exception ?: IllegalStateException()
+                                )
+                            )
+                        }
+                    }
             }
     }
 
@@ -83,6 +107,7 @@ class FirebaseAuthRepository(
 private fun FirebaseUser.toAuthUser(): AuthUser {
     return AuthUser(
         uid = uid,
-        email = email
+        email = email,
+        displayName = displayName
     )
 }

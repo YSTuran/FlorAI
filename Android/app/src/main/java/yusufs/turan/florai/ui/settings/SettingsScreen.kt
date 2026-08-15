@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import yusufs.turan.florai.data.auth.AuthUser
+import yusufs.turan.florai.ui.common.BackNavigationIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,14 +43,7 @@ fun SettingsScreen(
                         )
                     }
                 },
-                actions = {
-                    OutlinedButton(
-                        onClick = onBack,
-                        modifier = Modifier.padding(end = 12.dp)
-                    ) {
-                        Text("Geri")
-                    }
-                },
+                navigationIcon = { BackNavigationIcon(onBack = onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
@@ -79,6 +73,12 @@ fun SettingsScreen(
                         text = "Hesap",
                         style = MaterialTheme.typography.titleLarge
                     )
+                    user.displayName?.takeIf { it.isNotBlank() }?.let { displayName ->
+                        Text(
+                            text = displayName,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                     Text(
                         text = "Oturumu bu cihazdan kapat.",
                         style = MaterialTheme.typography.bodyMedium,

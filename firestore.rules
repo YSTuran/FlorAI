@@ -22,6 +22,7 @@ service cloud.firestore {
           'classId',
           'confidence',
           'lowConfidence',
+          'imageUrl',
           'topPredictions',
           'source',
           'createdAt'

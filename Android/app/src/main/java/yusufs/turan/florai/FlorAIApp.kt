@@ -1,14 +1,17 @@
 package yusufs.turan.florai
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
 import yusufs.turan.florai.ui.auth.AuthScreen
 import yusufs.turan.florai.ui.auth.AuthViewModel
+import yusufs.turan.florai.ui.history.PredictionHistoryDetailScreen
 import yusufs.turan.florai.ui.history.PredictionHistoryScreen
 import yusufs.turan.florai.ui.history.PredictionHistoryViewModel
 import yusufs.turan.florai.ui.home.HomeScreen
@@ -27,6 +30,7 @@ fun FlorAIApp(
     val predictionHistoryUiState by predictionHistoryViewModel.uiState.collectAsState()
     val currentUser = uiState.currentUser
     var appDestination by rememberSaveable { mutableStateOf(AppDestination.Home) }
+    var selectedHistoryItem by remember { mutableStateOf<PredictionHistoryItem?>(null) }
 
     if (currentUser == null) {
         AuthScreen(
@@ -62,6 +66,30 @@ fun FlorAIApp(
                 PredictionHistoryScreen(
                     uiState = predictionHistoryUiState,
                     onBack = { appDestination = AppDestination.Home },
+                    onOpenDetails = {
+                        selectedHistoryItem = it
+                        appDestination = AppDestination.HistoryDetail
+                    },
+                    onRefresh = predictionHistoryViewModel::loadHistory,
+                    onDeleteItem = predictionHistoryViewModel::deleteItem,
+                    onDeleteAll = predictionHistoryViewModel::deleteAll,
+                    onErrorShown = predictionHistoryViewModel::clearError
+                )
+            }
+
+            AppDestination.HistoryDetail -> {
+                selectedHistoryItem?.let { item ->
+                    PredictionHistoryDetailScreen(
+                        item = item,
+                        onBack = { appDestination = AppDestination.History }
+                    )
+                } ?: PredictionHistoryScreen(
+                    uiState = predictionHistoryUiState,
+                    onBack = { appDestination = AppDestination.Home },
+                    onOpenDetails = {
+                        selectedHistoryItem = it
+                        appDestination = AppDestination.HistoryDetail
+                    },
                     onRefresh = predictionHistoryViewModel::loadHistory,
                     onDeleteItem = predictionHistoryViewModel::deleteItem,
                     onDeleteAll = predictionHistoryViewModel::deleteAll,
@@ -87,5 +115,6 @@ private enum class AppDestination {
     Home,
     Prediction,
     History,
+    HistoryDetail,
     Settings
 }
