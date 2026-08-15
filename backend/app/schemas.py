@@ -62,6 +62,17 @@ class DeleteResponse(BaseModel):
     deletedCount: int
 
 
+class AppInfoResponse(BaseModel):
+    appName: str
+    version: str
+    description: str
+    modelLoaded: bool
+    classCount: int
+    classes: list[str]
+    firestoreEnabled: bool
+    endpoints: dict[str, str]
+
+
 class HealthResponse(BaseModel):
     status: str
     modelLoaded: bool

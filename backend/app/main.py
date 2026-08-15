@@ -8,6 +8,7 @@ from .firestore_repository import FirestoreRepository
 from .flower_catalog import get_flower_by_model_label
 from .model_service import FlowerClassifier
 from .schemas import (
+    AppInfoResponse,
     DeleteResponse,
     HealthResponse,
     PredictResponse,
@@ -39,6 +40,30 @@ def get_classifier(request: Request) -> FlowerClassifier:
 
 def get_firestore_repository(request: Request) -> FirestoreRepository:
     return request.app.state.firestore_repository
+
+
+@app.get("/", response_model=AppInfoResponse)
+async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInfoResponse:
+    settings = get_settings()
+    return AppInfoResponse(
+        appName=settings.app_name,
+        version=app.version,
+        description=(
+            "FlorAI is a FastAPI backend that identifies flower images and "
+            "returns botanical information for supported classes."
+        ),
+        modelLoaded=classifier.is_loaded,
+        classCount=len(classifier.names),
+        classes=list(classifier.names.values()),
+        firestoreEnabled=settings.firestore_enabled,
+        endpoints={
+            "health": "GET /health",
+            "predict": "POST /predict",
+            "predictionHistory": "GET /prediction-history",
+            "deletePrediction": "DELETE /prediction-history/{prediction_id}",
+            "deleteAllPredictions": "DELETE /prediction-history",
+        },
+    )
 
 
 @app.get("/health", response_model=HealthResponse)
