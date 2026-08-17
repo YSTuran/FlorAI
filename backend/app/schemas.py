@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class FlowerInfo(BaseModel):
@@ -58,6 +58,29 @@ class PredictionHistoryItem(BaseModel):
 
 class PredictionHistoryResponse(BaseModel):
     items: list[PredictionHistoryItem]
+
+
+class UserProfile(BaseModel):
+    uid: str
+    email: str | None = None
+    displayName: str | None = None
+    role: str = "user"
+    predictionCount: int = 0
+    createdAt: str | None = None
+    updatedAt: str | None = None
+    lastActiveAt: str | None = None
+
+
+class UserProfileUpdate(BaseModel):
+    displayName: str = Field(min_length=2, max_length=40)
+
+    @field_validator("displayName")
+    @classmethod
+    def normalize_display_name(cls, value: str) -> str:
+        normalized = " ".join(value.strip().split())
+        if len(normalized) < 2:
+            raise ValueError("Display name must be at least 2 characters.")
+        return normalized
 
 
 class DeleteResponse(BaseModel):

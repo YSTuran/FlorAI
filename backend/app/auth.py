@@ -12,6 +12,7 @@ class CurrentUser:
     uid: str
     email: str | None
     email_verified: bool
+    display_name: str | None = None
 
 
 async def get_current_user(
@@ -19,7 +20,12 @@ async def get_current_user(
 ) -> CurrentUser:
     settings = get_settings()
     if not settings.firebase_auth_required:
-        return CurrentUser(uid="local-dev", email=None, email_verified=True)
+        return CurrentUser(
+            uid="local-dev",
+            email=None,
+            email_verified=True,
+            display_name="Local Dev",
+        )
 
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -56,4 +62,5 @@ async def get_current_user(
         uid=str(decoded_token["uid"]),
         email=decoded_token.get("email"),
         email_verified=email_verified,
+        display_name=decoded_token.get("name"),
     )

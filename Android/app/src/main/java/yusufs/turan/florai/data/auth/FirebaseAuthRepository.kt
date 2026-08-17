@@ -9,9 +9,11 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.android.gms.tasks.Tasks
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class FirebaseAuthRepository(
@@ -90,6 +92,22 @@ class FirebaseAuthRepository(
         return runCatching {
             Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS).token
         }.getOrNull()
+    }
+
+    suspend fun updateDisplayName(displayName: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val user = firebaseAuth.currentUser
+                    ?: throw IllegalStateException("Oturum acik degil.")
+                val profileUpdates = UserProfileChangeRequest.Builder()
+                    .setDisplayName(displayName.trim())
+                    .build()
+
+                Tasks.await(user.updateProfile(profileUpdates), 10, TimeUnit.SECONDS)
+                Tasks.await(user.getIdToken(true), 10, TimeUnit.SECONDS)
+                Unit
+            }
+        }
     }
 
     fun getReadableMessage(error: Throwable): String {

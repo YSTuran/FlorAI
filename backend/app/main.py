@@ -15,6 +15,8 @@ from .schemas import (
     PredictionHistoryItem,
     PredictionHistoryResponse,
     PredictionResult,
+    UserProfile,
+    UserProfileUpdate,
 )
 
 
@@ -59,6 +61,8 @@ async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInf
         endpoints={
             "health": "GET /health",
             "predict": "POST /predict",
+            "currentUser": "GET /users/me",
+            "updateCurrentUser": "PUT /users/me",
             "predictionHistory": "GET /prediction-history",
             "deletePrediction": "DELETE /prediction-history/{prediction_id}",
             "deleteAllPredictions": "DELETE /prediction-history",
@@ -120,6 +124,7 @@ async def predict(
         top_predictions=predictions,
         low_confidence=low_confidence,
     )
+    firestore_repository.record_prediction_for_user(current_user)
 
     return PredictResponse(
         status="low_confidence" if low_confidence else "success",
@@ -139,6 +144,28 @@ async def predict(
             extraFacts=flower.extraFacts if flower else [],
         ),
     )
+
+
+@app.get("/users/me", response_model=UserProfile)
+async def get_current_user_profile(
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> UserProfile:
+    profile = firestore_repository.get_user_profile(current_user)
+    return UserProfile(**profile)
+
+
+@app.put("/users/me", response_model=UserProfile)
+async def update_current_user_profile(
+    payload: UserProfileUpdate,
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> UserProfile:
+    profile = firestore_repository.update_user_profile(
+        user=current_user,
+        display_name=payload.displayName,
+    )
+    return UserProfile(**profile)
 
 
 @app.get("/prediction-history", response_model=PredictionHistoryResponse)

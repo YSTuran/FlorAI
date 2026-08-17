@@ -7,6 +7,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import yusufs.turan.florai.BuildConfig
 import yusufs.turan.florai.data.prediction.PredictionRepository
 import yusufs.turan.florai.data.prediction.remote.PredictionApi
+import yusufs.turan.florai.data.user.UserRepository
+import yusufs.turan.florai.data.user.remote.UserApi
 import java.util.concurrent.TimeUnit
 
 object NetworkModule {
@@ -43,6 +45,12 @@ object NetworkModule {
     val predictionRepository: PredictionRepository by lazy {
         PredictionRepository(
             api = retrofit.create(PredictionApi::class.java)
+        )
+    }
+
+    val userRepository: UserRepository by lazy {
+        UserRepository(
+            api = retrofit.create(UserApi::class.java)
         )
     }
 }

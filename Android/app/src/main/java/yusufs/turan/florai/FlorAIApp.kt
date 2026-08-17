@@ -17,17 +17,21 @@ import yusufs.turan.florai.ui.history.PredictionHistoryViewModel
 import yusufs.turan.florai.ui.home.HomeScreen
 import yusufs.turan.florai.ui.prediction.PredictionScreen
 import yusufs.turan.florai.ui.prediction.PredictionViewModel
+import yusufs.turan.florai.ui.profile.ProfileScreen
+import yusufs.turan.florai.ui.profile.ProfileViewModel
 import yusufs.turan.florai.ui.settings.SettingsScreen
 
 @Composable
 fun FlorAIApp(
     authViewModel: AuthViewModel = viewModel(),
     predictionViewModel: PredictionViewModel = viewModel(),
-    predictionHistoryViewModel: PredictionHistoryViewModel = viewModel()
+    predictionHistoryViewModel: PredictionHistoryViewModel = viewModel(),
+    profileViewModel: ProfileViewModel = viewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsState()
     val predictionUiState by predictionViewModel.uiState.collectAsState()
     val predictionHistoryUiState by predictionHistoryViewModel.uiState.collectAsState()
+    val profileUiState by profileViewModel.uiState.collectAsState()
     val currentUser = uiState.currentUser
     var appDestination by rememberSaveable { mutableStateOf(AppDestination.Home) }
     var selectedHistoryItem by remember { mutableStateOf<PredictionHistoryItem?>(null) }
@@ -99,12 +103,23 @@ fun FlorAIApp(
 
             AppDestination.Settings -> {
                 SettingsScreen(
-                    user = currentUser,
                     onBack = { appDestination = AppDestination.Home },
+                    onOpenProfile = { appDestination = AppDestination.Profile },
                     onSignOut = {
                         appDestination = AppDestination.Home
                         authViewModel.signOut()
                     }
+                )
+            }
+
+            AppDestination.Profile -> {
+                ProfileScreen(
+                    uiState = profileUiState,
+                    onBack = { appDestination = AppDestination.Settings },
+                    onRefresh = profileViewModel::loadProfile,
+                    onSaveDisplayName = profileViewModel::saveDisplayName,
+                    onMessagesShown = profileViewModel::clearMessages,
+                    onProfileSaved = authViewModel::refreshCurrentUser
                 )
             }
         }
@@ -116,5 +131,6 @@ private enum class AppDestination {
     Prediction,
     History,
     HistoryDetail,
-    Settings
+    Settings,
+    Profile
 }
