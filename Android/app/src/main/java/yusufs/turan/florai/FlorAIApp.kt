@@ -36,12 +36,16 @@ fun FlorAIApp(
     var appDestination by rememberSaveable { mutableStateOf(AppDestination.Home) }
     var selectedHistoryItem by remember { mutableStateOf<PredictionHistoryItem?>(null) }
 
-    if (currentUser == null) {
+    if (currentUser == null || !currentUser.emailVerified) {
         AuthScreen(
             uiState = uiState,
             onSignIn = authViewModel::signIn,
             onRegister = authViewModel::register,
-            onErrorShown = authViewModel::clearError
+            onForgotPassword = authViewModel::sendPasswordResetEmail,
+            onResendVerification = authViewModel::resendEmailVerification,
+            onRefreshVerification = authViewModel::refreshEmailVerification,
+            onSignOut = authViewModel::signOut,
+            onMessagesShown = authViewModel::clearMessages
         )
     } else {
         when (appDestination) {

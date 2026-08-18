@@ -37,11 +37,41 @@ class FirebaseAuthRepository(
     ) {
         firebaseAuth.signInWithEmailAndPassword(email.trim(), password)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onResult(Result.success(Unit))
-                } else {
+                if (!task.isSuccessful) {
                     onResult(Result.failure(task.exception ?: IllegalStateException()))
+                    return@addOnCompleteListener
                 }
+
+                val user = task.result?.user ?: firebaseAuth.currentUser
+                if (user == null) {
+                    onResult(Result.success(Unit))
+                    return@addOnCompleteListener
+                }
+
+                user.reload()
+                    .addOnCompleteListener { reloadTask ->
+                        if (!reloadTask.isSuccessful) {
+                            onResult(
+                                Result.failure(
+                                    reloadTask.exception ?: IllegalStateException()
+                                )
+                            )
+                            return@addOnCompleteListener
+                        }
+
+                        user.getIdToken(true)
+                            .addOnCompleteListener { tokenTask ->
+                                if (tokenTask.isSuccessful) {
+                                    onResult(Result.success(Unit))
+                                } else {
+                                    onResult(
+                                        Result.failure(
+                                            tokenTask.exception ?: IllegalStateException()
+                                        )
+                                    )
+                                }
+                            }
+                    }
             }
     }
 
@@ -70,12 +100,93 @@ class FirebaseAuthRepository(
 
                 user.updateProfile(profileUpdates)
                     .addOnCompleteListener { profileTask ->
-                        if (profileTask.isSuccessful) {
+                        if (!profileTask.isSuccessful) {
+                            onResult(
+                                Result.failure(
+                                    profileTask.exception ?: IllegalStateException()
+                                )
+                            )
+                            return@addOnCompleteListener
+                        }
+
+                        user.sendEmailVerification()
+                            .addOnCompleteListener { verificationTask ->
+                                if (verificationTask.isSuccessful) {
+                                    onResult(Result.success(Unit))
+                                } else {
+                                    onResult(
+                                        Result.failure(
+                                            verificationTask.exception
+                                                ?: IllegalStateException()
+                                        )
+                                    )
+                                }
+                            }
+                    }
+            }
+    }
+
+    fun sendEmailVerification(
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        val user = firebaseAuth.currentUser
+        if (user == null) {
+            onResult(Result.failure(IllegalStateException("Oturum acik degil.")))
+            return
+        }
+
+        user.sendEmailVerification()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(Result.success(Unit))
+                } else {
+                    onResult(Result.failure(task.exception ?: IllegalStateException()))
+                }
+            }
+    }
+
+    fun sendPasswordResetEmail(
+        email: String,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        firebaseAuth.sendPasswordResetEmail(email.trim())
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(Result.success(Unit))
+                } else {
+                    onResult(Result.failure(task.exception ?: IllegalStateException()))
+                }
+            }
+    }
+
+    fun refreshCurrentUser(
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        val user = firebaseAuth.currentUser
+        if (user == null) {
+            onResult(Result.failure(IllegalStateException("Oturum acik degil.")))
+            return
+        }
+
+        user.reload()
+            .addOnCompleteListener { reloadTask ->
+                if (!reloadTask.isSuccessful) {
+                    onResult(
+                        Result.failure(
+                            reloadTask.exception ?: IllegalStateException()
+                        )
+                    )
+                    return@addOnCompleteListener
+                }
+
+                user.getIdToken(true)
+                    .addOnCompleteListener { tokenTask ->
+                        if (tokenTask.isSuccessful) {
                             onResult(Result.success(Unit))
                         } else {
                             onResult(
                                 Result.failure(
-                                    profileTask.exception ?: IllegalStateException()
+                                    tokenTask.exception ?: IllegalStateException()
                                 )
                             )
                         }
@@ -117,6 +228,7 @@ class FirebaseAuthRepository(
             is FirebaseAuthUserCollisionException -> "Bu e-posta adresi zaten kullaniliyor."
             is FirebaseAuthWeakPasswordException -> "Sifre en az 6 karakter olmali."
             is FirebaseNetworkException -> "Ag baglantisi kontrol edilmeli."
+            is IllegalStateException -> error.localizedMessage ?: "Oturum bilgisi bulunamadi."
             else -> error.localizedMessage ?: "Islem tamamlanamadi."
         }
     }
@@ -126,6 +238,7 @@ private fun FirebaseUser.toAuthUser(): AuthUser {
     return AuthUser(
         uid = uid,
         email = email,
-        displayName = displayName
+        displayName = displayName,
+        emailVerified = isEmailVerified
     )
 }
