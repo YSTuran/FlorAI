@@ -18,6 +18,7 @@ from .schemas import (
     UserProfile,
     UserProfileUpdate,
 )
+from .storage_service import StorageService
 
 
 @asynccontextmanager
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
     classifier.load()
     app.state.classifier = classifier
     app.state.firestore_repository = FirestoreRepository()
+    app.state.storage_service = StorageService()
     yield
 
 
@@ -42,6 +44,10 @@ def get_classifier(request: Request) -> FlowerClassifier:
 
 def get_firestore_repository(request: Request) -> FirestoreRepository:
     return request.app.state.firestore_repository
+
+
+def get_storage_service(request: Request) -> StorageService:
+    return request.app.state.storage_service
 
 
 @app.get("/", response_model=AppInfoResponse)
@@ -58,6 +64,7 @@ async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInf
         classCount=len(classifier.names),
         classes=list(classifier.names.values()),
         firestoreEnabled=settings.firestore_enabled,
+        storageEnabled=bool(settings.firebase_storage_bucket),
         endpoints={
             "health": "GET /health",
             "predict": "POST /predict",
@@ -79,6 +86,7 @@ async def health(classifier: FlowerClassifier = Depends(get_classifier)) -> Heal
         classCount=len(classifier.names),
         classes=list(classifier.names.values()),
         firestoreEnabled=settings.firestore_enabled,
+        storageEnabled=bool(settings.firebase_storage_bucket),
     )
 
 
@@ -88,6 +96,7 @@ async def predict(
     current_user: CurrentUser = Depends(get_current_user),
     classifier: FlowerClassifier = Depends(get_classifier),
     firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+    storage_service: StorageService = Depends(get_storage_service),
 ) -> PredictResponse:
     settings = get_settings()
 
@@ -123,6 +132,18 @@ async def predict(
         best_prediction=best_prediction,
         top_predictions=predictions,
         low_confidence=low_confidence,
+    )
+    image_url = storage_service.upload_prediction_image(
+        user=current_user,
+        prediction_id=prediction_id,
+        image_bytes=image_bytes,
+        content_type=image.content_type,
+        filename=image.filename,
+    )
+    firestore_repository.update_prediction_history_image_url(
+        user=current_user,
+        prediction_id=prediction_id,
+        image_url=image_url,
     )
     firestore_repository.record_prediction_for_user(current_user)
 
@@ -184,11 +205,17 @@ async def delete_prediction_history_item(
     prediction_id: str,
     current_user: CurrentUser = Depends(get_current_user),
     firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+    storage_service: StorageService = Depends(get_storage_service),
 ) -> DeleteResponse:
     deleted_count = firestore_repository.delete_prediction_history_item(
         user=current_user,
         prediction_id=prediction_id,
     )
+    if deleted_count:
+        storage_service.delete_prediction_image(
+            user=current_user,
+            prediction_id=prediction_id,
+        )
     return DeleteResponse(deletedCount=deleted_count)
 
 
@@ -196,6 +223,9 @@ async def delete_prediction_history_item(
 async def delete_prediction_history(
     current_user: CurrentUser = Depends(get_current_user),
     firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+    storage_service: StorageService = Depends(get_storage_service),
 ) -> DeleteResponse:
     deleted_count = firestore_repository.delete_prediction_history(current_user)
+    if deleted_count:
+        storage_service.delete_user_prediction_images(user=current_user)
     return DeleteResponse(deletedCount=deleted_count)

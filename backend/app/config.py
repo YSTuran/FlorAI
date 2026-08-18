@@ -17,6 +17,7 @@ class Settings:
     firestore_enabled: bool
     firebase_credentials_json: str | None
     firebase_service_account_path: str | None
+    firebase_storage_bucket: str | None
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -78,4 +79,5 @@ def get_settings() -> Settings:
         firestore_enabled=_bool_env("FIRESTORE_ENABLED", False),
         firebase_credentials_json=os.getenv("FIREBASE_CREDENTIALS_JSON"),
         firebase_service_account_path=firebase_service_account_path,
+        firebase_storage_bucket=os.getenv("FIREBASE_STORAGE_BUCKET"),
     )

@@ -95,6 +95,7 @@ class AppInfoResponse(BaseModel):
     classCount: int
     classes: list[str]
     firestoreEnabled: bool
+    storageEnabled: bool
     endpoints: dict[str, str]
 
 
@@ -104,3 +105,4 @@ class HealthResponse(BaseModel):
     classCount: int
     classes: list[str]
     firestoreEnabled: bool
+    storageEnabled: bool

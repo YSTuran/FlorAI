@@ -1,6 +1,8 @@
 package yusufs.turan.florai.ui.prediction
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -8,6 +10,12 @@ import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,15 +59,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import yusufs.turan.florai.ui.common.BackNavigationIcon
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +90,7 @@ fun PredictionScreen(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var previewBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var showCamera by remember { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -96,11 +111,59 @@ fun PredictionScreen(
             }
         }
     }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showCamera = true
+        } else {
+            onImageError("Kamera izni gerekli.")
+        }
+    }
+    val openCamera = {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            showCamera = true
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     LaunchedEffect(predictionUiState.errorMessage) {
         val message = predictionUiState.errorMessage ?: return@LaunchedEffect
         snackbarHostState.showSnackbar(message)
         onPredictionErrorShown()
+    }
+
+    if (showCamera) {
+        CameraCaptureScreen(
+            onBack = { showCamera = false },
+            onCaptured = { imageFile ->
+                coroutineScope.launch {
+                    val selectedImage = withContext(Dispatchers.IO) {
+                        context.readCapturedImage(imageFile)
+                    }
+                    val bitmap = withContext(Dispatchers.IO) {
+                        context.decodePreviewBitmap(imageFile)
+                    }
+
+                    if (selectedImage == null || bitmap == null) {
+                        onImageError("Kamera gorseli okunamadi.")
+                    } else {
+                        previewBitmap = bitmap
+                        onImageSelected(selectedImage)
+                    }
+                    showCamera = false
+                }
+            },
+            onError = onImageError,
+            modifier = modifier
+        )
+        return
     }
 
     Scaffold(
@@ -139,6 +202,7 @@ fun PredictionScreen(
                 selectedImageSizeBytes = predictionUiState.selectedImageSizeBytes,
                 isPredicting = predictionUiState.isPredicting,
                 hasResult = predictionUiState.result != null,
+                onOpenCamera = openCamera,
                 onPickImage = {
                     imagePicker.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -158,6 +222,148 @@ fun PredictionScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CameraCaptureScreen(
+    onBack: () -> Unit,
+    onCaptured: (File) -> Unit,
+    onError: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
+    var imageCapture by remember { mutableStateOf<ImageCapture?>(null) }
+    var isCapturing by remember { mutableStateOf(false) }
+
+    DisposableEffect(cameraProviderFuture) {
+        onDispose {
+            if (cameraProviderFuture.isDone) runCatching {
+                cameraProviderFuture.get().unbindAll()
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Kamera") },
+                navigationIcon = { BackNavigationIcon(onBack = onBack) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(Color.Black)
+        ) {
+            AndroidView(
+                modifier = Modifier.fillMaxSize(),
+                factory = { viewContext ->
+                    PreviewView(viewContext).apply {
+                        scaleType = PreviewView.ScaleType.FILL_CENTER
+                        cameraProviderFuture.addListener(
+                            {
+                                runCatching {
+                                    val cameraProvider = cameraProviderFuture.get()
+                                    val preview = Preview.Builder().build().also { preview ->
+                                        preview.setSurfaceProvider(surfaceProvider)
+                                    }
+                                    val capture = ImageCapture.Builder()
+                                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                                        .build()
+
+                                    cameraProvider.unbindAll()
+                                    cameraProvider.bindToLifecycle(
+                                        lifecycleOwner,
+                                        CameraSelector.DEFAULT_BACK_CAMERA,
+                                        preview,
+                                        capture
+                                    )
+                                    imageCapture = capture
+                                }.onFailure {
+                                    onError("Kamera baslatilamadi.")
+                                }
+                            },
+                            ContextCompat.getMainExecutor(viewContext)
+                        )
+                    }
+                }
+            )
+
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)
+            ) {
+                Button(
+                    onClick = {
+                        val capture = imageCapture
+                        if (capture == null) {
+                            onError("Kamera henuz hazir degil.")
+                            return@Button
+                        }
+
+                        val imageFile = File(
+                            context.cacheDir,
+                            "florai_capture_${System.currentTimeMillis()}.jpg"
+                        )
+                        val outputOptions = ImageCapture.OutputFileOptions.Builder(imageFile)
+                            .build()
+
+                        isCapturing = true
+                        capture.takePicture(
+                            outputOptions,
+                            mainExecutor,
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(
+                                    outputFileResults: ImageCapture.OutputFileResults
+                                ) {
+                                    isCapturing = false
+                                    onCaptured(imageFile)
+                                }
+
+                                override fun onError(exception: ImageCaptureException) {
+                                    isCapturing = false
+                                    onError("Fotograf cekilemedi.")
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                        .height(52.dp),
+                    enabled = imageCapture != null && !isCapturing
+                ) {
+                    if (isCapturing) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Text("Kaydediliyor")
+                        }
+                    } else {
+                        Text("Fotograf cek")
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ImagePickerCard(
     previewBitmap: ImageBitmap?,
@@ -165,6 +371,7 @@ private fun ImagePickerCard(
     selectedImageSizeBytes: Int?,
     isPredicting: Boolean,
     hasResult: Boolean,
+    onOpenCamera: () -> Unit,
     onPickImage: () -> Unit,
     onClearImage: () -> Unit,
     onPredict: () -> Unit
@@ -222,19 +429,27 @@ private fun ImagePickerCard(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 OutlinedButton(
+                    onClick = onOpenCamera,
+                    modifier = Modifier.weight(1f),
+                    enabled = !isPredicting
+                ) {
+                    Text("Kamera")
+                }
+                OutlinedButton(
                     onClick = onPickImage,
                     modifier = Modifier.weight(1f),
                     enabled = !isPredicting
                 ) {
-                    Text("Gorsel sec")
+                    Text("Galeri")
                 }
-                OutlinedButton(
-                    onClick = onClearImage,
-                    modifier = Modifier.weight(1f),
-                    enabled = selectedImageName != null && !isPredicting
-                ) {
-                    Text("Temizle")
-                }
+            }
+
+            OutlinedButton(
+                onClick = onClearImage,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedImageName != null && !isPredicting
+            ) {
+                Text("Temizle")
             }
 
             Button(
@@ -414,9 +629,24 @@ private fun Context.readSelectedImage(uri: Uri): SelectedImage? {
     )
 }
 
+private fun Context.readCapturedImage(file: File): SelectedImage? {
+    val bytes = file.takeIf { it.exists() }?.readBytes() ?: return null
+    return SelectedImage(
+        fileName = file.name,
+        mimeType = "image/jpeg",
+        bytes = bytes
+    )
+}
+
 private fun Context.decodePreviewBitmap(uri: Uri): ImageBitmap? {
     return runCatching {
         ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)).asImageBitmap()
+    }.getOrNull()
+}
+
+private fun Context.decodePreviewBitmap(file: File): ImageBitmap? {
+    return runCatching {
+        ImageDecoder.decodeBitmap(ImageDecoder.createSource(file)).asImageBitmap()
     }.getOrNull()
 }
 

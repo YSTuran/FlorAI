@@ -7,10 +7,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import yusufs.turan.florai.core.network.NetworkModule
+import yusufs.turan.florai.data.auth.AuthUser
 import yusufs.turan.florai.data.auth.FirebaseAuthRepository
+import yusufs.turan.florai.data.user.UserRepository
 
 class AuthViewModel(
-    private val authRepository: FirebaseAuthRepository = FirebaseAuthRepository()
+    private val authRepository: FirebaseAuthRepository = FirebaseAuthRepository(),
+    private val userRepository: UserRepository = NetworkModule.userRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
         AuthUiState(currentUser = authRepository.currentUser)
@@ -151,6 +155,26 @@ class AuthViewModel(
 
         authRepository.refreshCurrentUser { result ->
             val currentUser = authRepository.currentUser
+            if (result.isSuccess && currentUser?.emailVerified == true) {
+                viewModelScope.launch {
+                    val profileResult = ensureProfileAfterVerification(currentUser)
+                    _uiState.update {
+                        it.copy(
+                            currentUser = currentUser,
+                            isSubmitting = false,
+                            errorMessage = profileResult.exceptionOrNull()
+                                ?.let(userRepository::getReadableMessage),
+                            successMessage = if (profileResult.isSuccess) {
+                                "E-posta adresi dogrulandi."
+                            } else {
+                                null
+                            }
+                        )
+                    }
+                }
+                return@refreshCurrentUser
+            }
+
             _uiState.update {
                 it.copy(
                     currentUser = currentUser,
@@ -169,6 +193,24 @@ class AuthViewModel(
                 )
             }
         }
+    }
+
+    private suspend fun ensureProfileAfterVerification(user: AuthUser): Result<Unit> {
+        return userRepository.updateCurrentUserProfile(resolveProfileDisplayName(user))
+            .map { Unit }
+    }
+
+    private fun resolveProfileDisplayName(user: AuthUser): String {
+        val candidates = listOfNotNull(
+            user.displayName,
+            user.email?.substringBefore("@")?.replace(Regex("[._-]+"), " ")
+        )
+
+        return candidates
+            .map { it.trim() }
+            .firstOrNull { it.length >= 2 }
+            ?.take(40)
+            ?: "FlorAI kullanicisi"
     }
 
     fun clearMessages() {

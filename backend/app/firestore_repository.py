@@ -236,6 +236,7 @@ class FirestoreRepository:
         best_prediction: PredictionItem,
         top_predictions: list[PredictionItem],
         low_confidence: bool,
+        image_url: str | None = None,
     ) -> str | None:
         if not self.is_enabled:
             return None
@@ -255,7 +256,7 @@ class FirestoreRepository:
                 "classId": best_prediction.classId,
                 "confidence": best_prediction.confidence,
                 "lowConfidence": low_confidence,
-                "imageUrl": "",
+                "imageUrl": image_url or "",
                 "topPredictions": [
                     _model_to_dict(prediction) for prediction in top_predictions
                 ],
@@ -264,6 +265,29 @@ class FirestoreRepository:
             }
         )
         return doc_ref.id
+
+    def update_prediction_history_image_url(
+        self,
+        user: CurrentUser,
+        prediction_id: str | None,
+        image_url: str | None,
+    ) -> None:
+        if not self.is_enabled or not prediction_id or not image_url:
+            return
+
+        try:
+            doc_ref = self._client().collection("predictionHistory").document(prediction_id)
+            doc = doc_ref.get()
+            if not doc.exists:
+                return
+
+            data = doc.to_dict() or {}
+            if data.get("userId") != user.uid:
+                return
+
+            doc_ref.set({"imageUrl": image_url}, merge=True)
+        except Exception:
+            return
 
     def list_prediction_history(self, user: CurrentUser) -> list[dict]:
         if not self.is_enabled:

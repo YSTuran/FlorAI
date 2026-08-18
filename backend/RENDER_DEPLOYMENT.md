@@ -21,8 +21,13 @@ MAX_IMAGE_SIZE_MB=8
 FIREBASE_AUTH_REQUIRED=true
 REQUIRE_VERIFIED_EMAIL=true
 FIRESTORE_ENABLED=true
+FIREBASE_STORAGE_BUCKET=<your-firebase-storage-bucket>
 PYTHON_VERSION=3.13.7
 ```
+
+`FIREBASE_STORAGE_BUCKET` Firebase Storage bucket adidir. Firebase Console Storage
+sayfasinda gorunen bucket degerini kullan; ornek formatlar:
+`your-project-id.appspot.com` veya `your-project-id.firebasestorage.app`.
 
 ## Firebase Admin SDK
 
@@ -59,7 +64,8 @@ Expected:
   "status": "ok",
   "modelLoaded": true,
   "classCount": 5,
-  "firestoreEnabled": true
+  "firestoreEnabled": true,
+  "storageEnabled": true
 }
 ```
 
