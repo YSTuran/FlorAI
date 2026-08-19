@@ -71,6 +71,7 @@ async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInf
             "currentUser": "GET /users/me",
             "updateCurrentUser": "PUT /users/me",
             "predictionHistory": "GET /prediction-history",
+            "predictionHistoryDetail": "GET /prediction-history/{prediction_id}",
             "deletePrediction": "DELETE /prediction-history/{prediction_id}",
             "deleteAllPredictions": "DELETE /prediction-history",
         },
@@ -202,6 +203,19 @@ async def list_prediction_history(
     return PredictionHistoryResponse(
         items=[PredictionHistoryItem(**item) for item in items]
     )
+
+
+@app.get("/prediction-history/{prediction_id}", response_model=PredictionHistoryItem)
+async def get_prediction_history_item(
+    prediction_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+) -> PredictionHistoryItem:
+    item = firestore_repository.get_prediction_history_item(
+        user=current_user,
+        prediction_id=prediction_id,
+    )
+    return PredictionHistoryItem(**item)
 
 
 @app.delete("/prediction-history/{prediction_id}", response_model=DeleteResponse)

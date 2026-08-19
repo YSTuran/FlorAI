@@ -21,6 +21,11 @@ interface PredictionApi {
         @Query("limit") limit: Int
     ): PredictionHistoryResponseDto
 
+    @GET("prediction-history/{predictionId}")
+    suspend fun getPredictionHistoryItem(
+        @Path("predictionId") predictionId: String
+    ): PredictionHistoryItemDto
+
     @DELETE("prediction-history/{predictionId}")
     suspend fun deletePredictionHistoryItem(
         @Path("predictionId") predictionId: String

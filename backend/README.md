@@ -123,6 +123,12 @@ The history endpoint supports a bounded limit:
 GET /prediction-history?limit=50
 ```
 
+Use the detail endpoint to fetch a single authenticated user's history item:
+
+```text
+GET /prediction-history/{prediction_id}
+```
+
 The repository queries by `userId` and orders by `createdAt` descending when the
 Firestore index is available. Recommended composite index:
 

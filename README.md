@@ -116,6 +116,12 @@ Tahmin gecmisi endpointi:
 GET /prediction-history?limit=50
 ```
 
+Tekil tahmin gecmisi detayi:
+
+```text
+GET /prediction-history/{prediction_id}
+```
+
 Backend, kayitlari `userId` filtresi ve `createdAt DESC` siralamasi ile almaya
 calisir. En iyi performans icin Firestore'da su composite index onerilir:
 

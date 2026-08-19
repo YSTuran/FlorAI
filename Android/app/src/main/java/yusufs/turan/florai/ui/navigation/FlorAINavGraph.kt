@@ -24,8 +24,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import yusufs.turan.florai.data.auth.AuthUser
+import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import yusufs.turan.florai.ui.common.BackNavigationIcon
+import yusufs.turan.florai.ui.history.PredictionHistoryDetailUiState
 import yusufs.turan.florai.ui.history.PredictionHistoryDetailScreen
 import yusufs.turan.florai.ui.history.PredictionHistoryScreen
 import yusufs.turan.florai.ui.history.PredictionHistoryUiState
@@ -41,6 +43,7 @@ fun FlorAINavGraph(
     currentUser: AuthUser,
     predictionUiState: PredictionUiState,
     predictionHistoryUiState: PredictionHistoryUiState,
+    predictionHistoryDetailUiState: PredictionHistoryDetailUiState,
     profileUiState: ProfileUiState,
     onImageSelected: (SelectedImage) -> Unit,
     onPredict: () -> Unit,
@@ -51,6 +54,7 @@ fun FlorAINavGraph(
     onDeleteHistoryItem: (String) -> Unit,
     onDeleteHistory: () -> Unit,
     onHistoryErrorShown: () -> Unit,
+    onLoadHistoryDetail: (String, PredictionHistoryItem?) -> Unit,
     onRefreshProfile: () -> Unit,
     onSaveDisplayName: (String) -> Unit,
     onProfileMessagesShown: () -> Unit,
@@ -109,19 +113,30 @@ fun FlorAINavGraph(
         ) { backStackEntry ->
             val predictionId = backStackEntry.arguments
                 ?.getString(AppRoute.PREDICTION_ID_ARG)
-            val item = predictionHistoryUiState.items.firstOrNull {
+            val cachedItem = predictionHistoryUiState.items.firstOrNull {
                 it.id == predictionId
             }
 
-            if (item == null) {
-                LaunchedEffect(predictionId) {
-                    onRefreshHistory()
+            LaunchedEffect(predictionId) {
+                if (predictionId != null) {
+                    onLoadHistoryDetail(predictionId, cachedItem)
                 }
+            }
 
+            val item = predictionHistoryDetailUiState.item?.takeIf {
+                it.id == predictionId
+            } ?: cachedItem
+
+            if (item == null) {
                 MissingHistoryDetailScreen(
-                    isLoading = predictionHistoryUiState.isLoading,
+                    isLoading = predictionHistoryDetailUiState.isLoading,
+                    errorMessage = predictionHistoryDetailUiState.errorMessage,
                     onBack = navController::navigateUp,
-                    onRefresh = onRefreshHistory
+                    onRefresh = {
+                        if (predictionId != null) {
+                            onLoadHistoryDetail(predictionId, cachedItem)
+                        }
+                    }
                 )
             } else {
                 PredictionHistoryDetailScreen(
@@ -164,6 +179,7 @@ fun FlorAINavGraph(
 @Composable
 private fun MissingHistoryDetailScreen(
     isLoading: Boolean,
+    errorMessage: String?,
     onBack: () -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -187,7 +203,11 @@ private fun MissingHistoryDetailScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (isLoading) "Kayit yukleniyor" else "Tahmin kaydi bulunamadi",
+                text = when {
+                    isLoading -> "Kayit yukleniyor"
+                    errorMessage != null -> errorMessage
+                    else -> "Tahmin kaydi bulunamadi"
+                },
                 style = MaterialTheme.typography.titleLarge
             )
             Button(

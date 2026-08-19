@@ -30,6 +30,29 @@ def _clean_display_name(value: str | None) -> str | None:
     return normalized or None
 
 
+def _history_payload_from_doc(doc) -> dict:
+    data = doc.to_dict() or {}
+    created_at = data.get("createdAt")
+    if hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+    image_url = data.get("imageUrl")
+    if not isinstance(image_url, str) or not image_url.strip():
+        image_url = None
+
+    return {
+        "id": doc.id,
+        "predictedFlowerId": data.get("predictedFlowerId"),
+        "displayName": data.get("displayName") or "Bilinmeyen cicek",
+        "modelLabel": data.get("modelLabel") or "",
+        "classId": int(data.get("classId") or 0),
+        "confidence": float(data.get("confidence") or 0),
+        "lowConfidence": bool(data.get("lowConfidence") or False),
+        "imageUrl": image_url,
+        "topPredictions": data.get("topPredictions") or [],
+        "createdAt": created_at,
+    }
+
+
 class FirestoreRepository:
     @property
     def is_enabled(self) -> bool:
@@ -316,28 +339,7 @@ class FirestoreRepository:
 
             history_items: list[dict] = []
             for doc in docs:
-                data = doc.to_dict() or {}
-                created_at = data.get("createdAt")
-                if hasattr(created_at, "isoformat"):
-                    created_at = created_at.isoformat()
-                image_url = data.get("imageUrl")
-                if not isinstance(image_url, str) or not image_url.strip():
-                    image_url = None
-
-                history_items.append(
-                    {
-                        "id": doc.id,
-                        "predictedFlowerId": data.get("predictedFlowerId"),
-                        "displayName": data.get("displayName") or "Bilinmeyen cicek",
-                        "modelLabel": data.get("modelLabel") or "",
-                        "classId": int(data.get("classId") or 0),
-                        "confidence": float(data.get("confidence") or 0),
-                        "lowConfidence": bool(data.get("lowConfidence") or False),
-                        "imageUrl": image_url,
-                        "topPredictions": data.get("topPredictions") or [],
-                        "createdAt": created_at,
-                    }
-                )
+                history_items.append(_history_payload_from_doc(doc))
         except HTTPException:
             raise
         except Exception as exc:
@@ -351,6 +353,43 @@ class FirestoreRepository:
             key=lambda item: item.get("createdAt") or "",
             reverse=True,
         )[:bounded_limit]
+
+    def get_prediction_history_item(
+        self,
+        user: CurrentUser,
+        prediction_id: str,
+    ) -> dict:
+        if not self.is_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Prediction history item was not found.",
+            )
+
+        try:
+            doc_ref = self._client().collection("predictionHistory").document(prediction_id)
+            doc = doc_ref.get()
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
+
+        if not doc.exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Prediction history item was not found.",
+            )
+
+        data = doc.to_dict() or {}
+        if data.get("userId") != user.uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view your own prediction history.",
+            )
+
+        return _history_payload_from_doc(doc)
 
     def delete_prediction_history_item(self, user: CurrentUser, prediction_id: str) -> int:
         if not self.is_enabled:

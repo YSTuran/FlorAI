@@ -45,6 +45,14 @@ class PredictionRepository(
         }
     }
 
+    suspend fun getPredictionHistoryItem(predictionId: String): Result<PredictionHistoryItem> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                api.getPredictionHistoryItem(predictionId).toDomain()
+            }
+        }
+    }
+
     suspend fun deletePredictionHistoryItem(predictionId: String): Result<Int> {
         return withContext(Dispatchers.IO) {
             runCatching {
