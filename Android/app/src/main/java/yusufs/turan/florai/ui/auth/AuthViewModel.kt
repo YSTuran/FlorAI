@@ -37,13 +37,9 @@ class AuthViewModel(
     }
 
     fun signIn(email: String, password: String) {
-        submitAuth(email, password, isRegister = false) {
+        submitAuth(email, password) {
             authRepository.signIn(email, password, it)
         }
-    }
-
-    fun register(displayName: String, email: String, password: String) {
-        register(displayName, email, password, password)
     }
 
     fun register(
@@ -54,12 +50,11 @@ class AuthViewModel(
     ) {
         val trimmedDisplayName = displayName.trim()
         val trimmedEmail = email.trim()
-        val validationMessage = validateCredentials(
+        val validationMessage = AuthInputValidator.validateRegister(
+            displayName = trimmedDisplayName,
             email = trimmedEmail,
             password = password,
-            confirmPassword = confirmPassword,
-            displayName = trimmedDisplayName,
-            isRegister = true
+            confirmPassword = confirmPassword
         )
         if (validationMessage != null) {
             _uiState.update { it.copy(errorMessage = validationMessage) }
@@ -101,7 +96,7 @@ class AuthViewModel(
 
     fun sendPasswordResetEmail(email: String) {
         val trimmedEmail = email.trim()
-        val validationMessage = validateEmail(trimmedEmail)
+        val validationMessage = AuthInputValidator.validatePasswordResetEmail(trimmedEmail)
         if (validationMessage != null) {
             _uiState.update { it.copy(errorMessage = validationMessage) }
             return
@@ -196,21 +191,10 @@ class AuthViewModel(
     }
 
     private suspend fun ensureProfileAfterVerification(user: AuthUser): Result<Unit> {
-        return userRepository.updateCurrentUserProfile(resolveProfileDisplayName(user))
-            .map { Unit }
-    }
-
-    private fun resolveProfileDisplayName(user: AuthUser): String {
-        val candidates = listOfNotNull(
-            user.displayName,
-            user.email?.substringBefore("@")?.replace(Regex("[._-]+"), " ")
+        return userRepository.updateCurrentUserProfile(
+            AuthProfileDisplayNameResolver.resolve(user)
         )
-
-        return candidates
-            .map { it.trim() }
-            .firstOrNull { it.length >= 2 }
-            ?.take(40)
-            ?: "FlorAI kullanicisi"
+            .map { Unit }
     }
 
     fun clearMessages() {
@@ -220,18 +204,10 @@ class AuthViewModel(
     private fun submitAuth(
         email: String,
         password: String,
-        displayName: String = "",
-        isRegister: Boolean,
         action: ((Result<Unit>) -> Unit) -> Unit
     ) {
         val trimmedEmail = email.trim()
-        val validationMessage = validateCredentials(
-            email = trimmedEmail,
-            password = password,
-            confirmPassword = password,
-            displayName = displayName,
-            isRegister = isRegister
-        )
+        val validationMessage = AuthInputValidator.validateLogin(trimmedEmail, password)
         if (validationMessage != null) {
             _uiState.update { it.copy(errorMessage = validationMessage) }
             return
@@ -260,49 +236,5 @@ class AuthViewModel(
                 )
             }
         }
-    }
-
-    private fun validateCredentials(
-        email: String,
-        password: String,
-        confirmPassword: String,
-        displayName: String,
-        isRegister: Boolean
-    ): String? {
-        if (email.isBlank() || password.isBlank()) {
-            return "E-posta ve sifre zorunlu."
-        }
-
-        validateEmail(email)?.let { return it }
-
-        if (isRegister && displayName.isBlank()) {
-            return "Kullanici ismi zorunlu."
-        }
-
-        if (isRegister && displayName.length < 2) {
-            return "Kullanici ismi en az 2 karakter olmali."
-        }
-
-        if (isRegister && password.length < 6) {
-            return "Sifre en az 6 karakter olmali."
-        }
-
-        if (isRegister && password != confirmPassword) {
-            return "Sifreler eslesmiyor."
-        }
-
-        return null
-    }
-
-    private fun validateEmail(email: String): String? {
-        if (email.isBlank()) {
-            return "E-posta zorunlu."
-        }
-
-        if (!email.contains("@") || !email.contains(".")) {
-            return "Gecerli bir e-posta adresi gir."
-        }
-
-        return null
     }
 }

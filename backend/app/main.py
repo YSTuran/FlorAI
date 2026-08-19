@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, status
 
 from .auth import CurrentUser, get_current_user
 from .config import get_settings
-from .firestore_repository import FirestoreRepository
+from .firestore_repository import FirestoreRepository, MAX_HISTORY_ITEMS
 from .flower_catalog import get_flower_by_model_label
 from .model_service import FlowerClassifier
 from .schemas import (
@@ -191,10 +191,14 @@ async def update_current_user_profile(
 
 @app.get("/prediction-history", response_model=PredictionHistoryResponse)
 async def list_prediction_history(
+    limit: int = Query(default=MAX_HISTORY_ITEMS, ge=1, le=MAX_HISTORY_ITEMS),
     current_user: CurrentUser = Depends(get_current_user),
     firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
 ) -> PredictionHistoryResponse:
-    items = firestore_repository.list_prediction_history(current_user)
+    items = firestore_repository.list_prediction_history(
+        user=current_user,
+        limit=limit,
+    )
     return PredictionHistoryResponse(
         items=[PredictionHistoryItem(**item) for item in items]
     )

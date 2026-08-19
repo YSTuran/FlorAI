@@ -15,6 +15,8 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.io.IOException
 
+private const val DEFAULT_HISTORY_LIMIT = 50
+
 class PredictionRepository(
     private val api: PredictionApi
 ) {
@@ -33,10 +35,12 @@ class PredictionRepository(
         }
     }
 
-    suspend fun getPredictionHistory(): Result<List<PredictionHistoryItem>> {
+    suspend fun getPredictionHistory(
+        limit: Int = DEFAULT_HISTORY_LIMIT
+    ): Result<List<PredictionHistoryItem>> {
         return withContext(Dispatchers.IO) {
             runCatching {
-                api.getPredictionHistory().toDomain()
+                api.getPredictionHistory(limit).toDomain()
             }
         }
     }

@@ -1,6 +1,8 @@
 # FlorAI Backend
 
 FastAPI backend for classifying flower images with the trained Ultralytics model.
+It also integrates with Firebase Auth, Firestore, and Firebase Storage for the
+mobile app flow.
 
 ## Current Model Classes
 
@@ -58,6 +60,7 @@ For production:
 FIREBASE_AUTH_REQUIRED=true
 REQUIRE_VERIFIED_EMAIL=true
 FIRESTORE_ENABLED=true
+FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
 FIREBASE_CREDENTIALS_JSON={...}
 ```
 
@@ -102,6 +105,7 @@ Stored fields include:
   "classId": 0,
   "confidence": 0.91,
   "lowConfidence": false,
+  "imageUrl": "https://firebasestorage.googleapis.com/...",
   "topPredictions": [],
   "source": "mobile",
   "createdAt": "server_timestamp"
@@ -110,6 +114,36 @@ Stored fields include:
 
 The response `predictionId` is `null` while Firestore is disabled. It contains the
 created history document ID when Firestore is enabled.
+
+## Prediction History Query
+
+The history endpoint supports a bounded limit:
+
+```text
+GET /prediction-history?limit=50
+```
+
+The repository queries by `userId` and orders by `createdAt` descending when the
+Firestore index is available. Recommended composite index:
+
+```text
+Collection: predictionHistory
+Fields:
+  userId Ascending
+  createdAt Descending
+```
+
+## Firebase Storage
+
+When `FIREBASE_STORAGE_BUCKET` is set, each uploaded prediction image is stored
+under:
+
+```text
+prediction-images/{uid}/{predictionId}.{extension}
+```
+
+The generated download URL is written to `predictionHistory.imageUrl`. Deleting a
+history item also attempts to remove its Storage image.
 
 ## Render Start Command
 

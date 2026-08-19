@@ -289,16 +289,30 @@ class FirestoreRepository:
         except Exception:
             return
 
-    def list_prediction_history(self, user: CurrentUser) -> list[dict]:
+    def list_prediction_history(
+        self,
+        user: CurrentUser,
+        limit: int = MAX_HISTORY_ITEMS,
+    ) -> list[dict]:
         if not self.is_enabled:
             return []
 
         from google.cloud.firestore_v1.base_query import FieldFilter
+        from google.api_core.exceptions import FailedPrecondition
+        from firebase_admin import firestore
 
         try:
-            docs = self._client().collection("predictionHistory").where(
+            bounded_limit = max(1, min(limit, MAX_HISTORY_ITEMS))
+            query = self._client().collection("predictionHistory").where(
                 filter=FieldFilter("userId", "==", user.uid)
-            ).limit(MAX_HISTORY_ITEMS).stream()
+            )
+            try:
+                docs = list(query.order_by(
+                    "createdAt",
+                    direction=firestore.Query.DESCENDING,
+                ).limit(bounded_limit).stream())
+            except FailedPrecondition:
+                docs = list(query.stream())
 
             history_items: list[dict] = []
             for doc in docs:
@@ -336,7 +350,7 @@ class FirestoreRepository:
             history_items,
             key=lambda item: item.get("createdAt") or "",
             reverse=True,
-        )
+        )[:bounded_limit]
 
     def delete_prediction_history_item(self, user: CurrentUser, prediction_id: str) -> int:
         if not self.is_enabled:
