@@ -3,7 +3,7 @@ package yusufs.turan.florai
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import yusufs.turan.florai.ui.auth.AuthScreen
 import yusufs.turan.florai.ui.auth.AuthViewModel
 import yusufs.turan.florai.ui.history.PredictionHistoryDetailViewModel
@@ -14,11 +14,11 @@ import yusufs.turan.florai.ui.profile.ProfileViewModel
 
 @Composable
 fun FlorAIApp(
-    authViewModel: AuthViewModel = viewModel(),
-    predictionViewModel: PredictionViewModel = viewModel(),
-    predictionHistoryViewModel: PredictionHistoryViewModel = viewModel(),
-    predictionHistoryDetailViewModel: PredictionHistoryDetailViewModel = viewModel(),
-    profileViewModel: ProfileViewModel = viewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    predictionViewModel: PredictionViewModel = hiltViewModel(),
+    predictionHistoryViewModel: PredictionHistoryViewModel = hiltViewModel(),
+    predictionHistoryDetailViewModel: PredictionHistoryDetailViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val authUiState by authViewModel.uiState.collectAsState()
     val predictionUiState by predictionViewModel.uiState.collectAsState()
@@ -59,6 +59,7 @@ fun FlorAIApp(
         onLoadHistoryDetail = predictionHistoryDetailViewModel::loadDetail,
         onRefreshProfile = profileViewModel::loadProfile,
         onSaveDisplayName = profileViewModel::saveDisplayName,
+        onDeleteAccount = profileViewModel::deleteAccount,
         onProfileMessagesShown = profileViewModel::clearMessages,
         onProfileSaved = authViewModel::refreshCurrentUser,
         onSignOut = authViewModel::signOut

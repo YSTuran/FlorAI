@@ -70,6 +70,7 @@ async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInf
             "predict": "POST /predict",
             "currentUser": "GET /users/me",
             "updateCurrentUser": "PUT /users/me",
+            "deleteCurrentUser": "DELETE /users/me",
             "predictionHistory": "GET /prediction-history",
             "predictionHistoryDetail": "GET /prediction-history/{prediction_id}",
             "deletePrediction": "DELETE /prediction-history/{prediction_id}",
@@ -128,12 +129,7 @@ async def predict(
         flower = get_flower_by_model_label(best_prediction.modelLabel)
 
     low_confidence = best_prediction.confidence < settings.confidence_threshold
-    prediction_id = firestore_repository.create_prediction_history(
-        user=current_user,
-        best_prediction=best_prediction,
-        top_predictions=predictions,
-        low_confidence=low_confidence,
-    )
+    prediction_id = firestore_repository.create_prediction_history_id()
     image_url = storage_service.upload_prediction_image(
         user=current_user,
         prediction_id=prediction_id,
@@ -141,11 +137,23 @@ async def predict(
         content_type=image.content_type,
         filename=image.filename,
     )
-    firestore_repository.update_prediction_history_image_url(
-        user=current_user,
-        prediction_id=prediction_id,
-        image_url=image_url,
-    )
+    try:
+        prediction_id = firestore_repository.create_prediction_history(
+            user=current_user,
+            best_prediction=best_prediction,
+            top_predictions=predictions,
+            low_confidence=low_confidence,
+            prediction_id=prediction_id,
+            image_url=image_url,
+        )
+    except HTTPException:
+        if prediction_id is not None:
+            storage_service.delete_prediction_image(
+                user=current_user,
+                prediction_id=prediction_id,
+            )
+        raise
+
     firestore_repository.record_prediction_for_user(current_user)
 
     return PredictResponse(
@@ -188,6 +196,17 @@ async def update_current_user_profile(
         display_name=payload.displayName,
     )
     return UserProfile(**profile)
+
+
+@app.delete("/users/me", response_model=DeleteResponse)
+async def delete_current_user_data(
+    current_user: CurrentUser = Depends(get_current_user),
+    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
+    storage_service: StorageService = Depends(get_storage_service),
+) -> DeleteResponse:
+    deleted_count = firestore_repository.delete_user_data(current_user)
+    storage_service.delete_user_prediction_images(user=current_user)
+    return DeleteResponse(deletedCount=deleted_count)
 
 
 @app.get("/prediction-history", response_model=PredictionHistoryResponse)

@@ -54,6 +54,9 @@ def _history_payload_from_doc(doc) -> dict:
 
 
 class FirestoreRepository:
+    def __init__(self) -> None:
+        self._flower_cache: dict[str, FlowerInfo] = {}
+
     @property
     def is_enabled(self) -> bool:
         return get_settings().firestore_enabled
@@ -71,13 +74,19 @@ class FirestoreRepository:
         if not self.is_enabled or not flower_id:
             return None
 
+        cached_flower = self._flower_cache.get(flower_id)
+        if cached_flower is not None:
+            return cached_flower
+
         doc = self._client().collection("flowers").document(flower_id).get()
         if not doc.exists:
             return None
 
         data = doc.to_dict() or {}
         data["id"] = data.get("id") or flower_id
-        return FlowerInfo(**data)
+        flower = FlowerInfo(**data)
+        self._flower_cache[flower_id] = flower
+        return flower
 
     def _profile_payload_from_data(
         self,
@@ -259,6 +268,7 @@ class FirestoreRepository:
         best_prediction: PredictionItem,
         top_predictions: list[PredictionItem],
         low_confidence: bool,
+        prediction_id: str | None = None,
         image_url: str | None = None,
     ) -> str | None:
         if not self.is_enabled:
@@ -268,7 +278,7 @@ class FirestoreRepository:
 
         from firebase_admin import firestore
 
-        doc_ref = client.collection("predictionHistory").document()
+        doc_ref = client.collection("predictionHistory").document(prediction_id)
         doc_ref.set(
             {
                 "userId": user.uid,
@@ -288,6 +298,12 @@ class FirestoreRepository:
             }
         )
         return doc_ref.id
+
+    def create_prediction_history_id(self) -> str | None:
+        if not self.is_enabled:
+            return None
+
+        return self._client().collection("predictionHistory").document().id
 
     def update_prediction_history_image_url(
         self,
@@ -458,6 +474,28 @@ class FirestoreRepository:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Prediction history is not available.",
+            ) from exc
+
+        return deleted_count
+
+    def delete_user_data(self, user: CurrentUser) -> int:
+        if not self.is_enabled:
+            return 0
+
+        deleted_count = self.delete_prediction_history(user)
+
+        try:
+            doc_ref = self._client().collection("users").document(user.uid)
+            doc = doc_ref.get()
+            if doc.exists:
+                doc_ref.delete()
+                deleted_count += 1
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="User data could not be deleted.",
             ) from exc
 
         return deleted_count

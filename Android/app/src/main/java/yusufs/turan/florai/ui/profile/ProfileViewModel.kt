@@ -2,18 +2,20 @@ package yusufs.turan.florai.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import yusufs.turan.florai.core.network.NetworkModule
 import yusufs.turan.florai.data.auth.FirebaseAuthRepository
 import yusufs.turan.florai.data.user.UserRepository
+import javax.inject.Inject
 
-class ProfileViewModel(
-    private val userRepository: UserRepository = NetworkModule.userRepository,
-    private val authRepository: FirebaseAuthRepository = FirebaseAuthRepository()
+@HiltViewModel
+class ProfileViewModel @Inject constructor(
+    private val userRepository: UserRepository,
+    private val authRepository: FirebaseAuthRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -75,6 +77,58 @@ class ProfileViewModel(
                         state.savedProfileVersion + 1
                     } else {
                         state.savedProfileVersion
+                    }
+                )
+            }
+        }
+    }
+
+    fun deleteAccount(password: String) {
+        if (password.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Hesabi silmek icin sifreni girmelisin.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isDeletingAccount = true, errorMessage = null, successMessage = null)
+            }
+
+            val reauthResult = authRepository.reauthenticateWithPassword(password)
+            if (reauthResult.isFailure) {
+                _uiState.update {
+                    it.copy(
+                        isDeletingAccount = false,
+                        errorMessage = reauthResult.exceptionOrNull()
+                            ?.let(authRepository::getReadableMessage)
+                    )
+                }
+                return@launch
+            }
+
+            val dataResult = userRepository.deleteCurrentUserData()
+            if (dataResult.isFailure) {
+                _uiState.update {
+                    it.copy(
+                        isDeletingAccount = false,
+                        errorMessage = dataResult.exceptionOrNull()
+                            ?.let(userRepository::getReadableMessage)
+                    )
+                }
+                return@launch
+            }
+
+            val deleteResult = authRepository.deleteCurrentUser()
+            _uiState.update {
+                it.copy(
+                    profile = if (deleteResult.isSuccess) null else it.profile,
+                    isDeletingAccount = false,
+                    errorMessage = deleteResult.exceptionOrNull()
+                        ?.let(authRepository::getReadableMessage),
+                    successMessage = if (deleteResult.isSuccess) {
+                        "Hesap silindi."
+                    } else {
+                        null
                     }
                 )
             }

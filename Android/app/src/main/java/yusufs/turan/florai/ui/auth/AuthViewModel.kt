@@ -2,19 +2,21 @@ package yusufs.turan.florai.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import yusufs.turan.florai.core.network.NetworkModule
 import yusufs.turan.florai.data.auth.AuthUser
 import yusufs.turan.florai.data.auth.FirebaseAuthRepository
 import yusufs.turan.florai.data.user.UserRepository
+import javax.inject.Inject
 
-class AuthViewModel(
-    private val authRepository: FirebaseAuthRepository = FirebaseAuthRepository(),
-    private val userRepository: UserRepository = NetworkModule.userRepository
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    private val authRepository: FirebaseAuthRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
         AuthUiState(currentUser = authRepository.currentUser)

@@ -2,17 +2,19 @@ package yusufs.turan.florai.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import yusufs.turan.florai.core.network.NetworkModule
 import yusufs.turan.florai.data.prediction.PredictionRepository
 import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
+import javax.inject.Inject
 
-class PredictionHistoryDetailViewModel(
-    private val predictionRepository: PredictionRepository = NetworkModule.predictionRepository
+@HiltViewModel
+class PredictionHistoryDetailViewModel @Inject constructor(
+    private val predictionRepository: PredictionRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PredictionHistoryDetailUiState())
     val uiState: StateFlow<PredictionHistoryDetailUiState> = _uiState.asStateFlow()

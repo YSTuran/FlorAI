@@ -2,8 +2,10 @@ package yusufs.turan.florai.data.auth
 
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
@@ -221,10 +223,38 @@ class FirebaseAuthRepository(
         }
     }
 
+    suspend fun reauthenticateWithPassword(password: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val user = firebaseAuth.currentUser
+                    ?: throw IllegalStateException("Oturum acik degil.")
+                val email = user.email
+                    ?: throw IllegalStateException("E-posta bilgisi bulunamadi.")
+                val credential = EmailAuthProvider.getCredential(email, password)
+
+                Tasks.await(user.reauthenticate(credential), 10, TimeUnit.SECONDS)
+                Tasks.await(user.getIdToken(true), 10, TimeUnit.SECONDS)
+                Unit
+            }
+        }
+    }
+
+    suspend fun deleteCurrentUser(): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            runCatching {
+                val user = firebaseAuth.currentUser
+                    ?: throw IllegalStateException("Oturum acik degil.")
+                Tasks.await(user.delete(), 10, TimeUnit.SECONDS)
+                Unit
+            }
+        }
+    }
+
     fun getReadableMessage(error: Throwable): String {
         return when (error) {
             is FirebaseAuthInvalidUserException -> "Bu e-posta ile kayitli kullanici bulunamadi."
             is FirebaseAuthInvalidCredentialsException -> "E-posta veya sifre hatali."
+            is FirebaseAuthRecentLoginRequiredException -> "Bu islem icin sifrenle tekrar dogrulama gerekiyor."
             is FirebaseAuthUserCollisionException -> "Bu e-posta adresi zaten kullaniliyor."
             is FirebaseAuthWeakPasswordException -> "Sifre en az 6 karakter olmali."
             is FirebaseNetworkException -> "Ag baglantisi kontrol edilmeli."

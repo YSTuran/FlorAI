@@ -29,3 +29,7 @@ data class UserProfileDto(
 data class UpdateUserProfileRequestDto(
     val displayName: String
 )
+
+data class DeleteUserDataResponseDto(
+    val deletedCount: Int
+)

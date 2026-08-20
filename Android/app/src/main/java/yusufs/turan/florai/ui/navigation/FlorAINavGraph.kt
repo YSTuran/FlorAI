@@ -57,6 +57,7 @@ fun FlorAINavGraph(
     onLoadHistoryDetail: (String, PredictionHistoryItem?) -> Unit,
     onRefreshProfile: () -> Unit,
     onSaveDisplayName: (String) -> Unit,
+    onDeleteAccount: (String) -> Unit,
     onProfileMessagesShown: () -> Unit,
     onProfileSaved: () -> Unit,
     onSignOut: () -> Unit,
@@ -168,6 +169,7 @@ fun FlorAINavGraph(
                 onBack = navController::navigateUp,
                 onRefresh = onRefreshProfile,
                 onSaveDisplayName = onSaveDisplayName,
+                onDeleteAccount = onDeleteAccount,
                 onMessagesShown = onProfileMessagesShown,
                 onProfileSaved = onProfileSaved
             )

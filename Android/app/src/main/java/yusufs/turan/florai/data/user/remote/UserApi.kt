@@ -1,6 +1,7 @@
 package yusufs.turan.florai.data.user.remote
 
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PUT
 
@@ -12,4 +13,7 @@ interface UserApi {
     suspend fun updateCurrentUserProfile(
         @Body request: UpdateUserProfileRequestDto
     ): UserProfileDto
+
+    @DELETE("users/me")
+    suspend fun deleteCurrentUserData(): DeleteUserDataResponseDto
 }

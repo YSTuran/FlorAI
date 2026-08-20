@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,6 +45,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -53,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +72,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import yusufs.turan.florai.domain.flower.SupportedFlower
+import yusufs.turan.florai.domain.flower.SupportedFlowers
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import yusufs.turan.florai.ui.common.BackNavigationIcon
@@ -91,6 +96,7 @@ fun PredictionScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var previewBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var showCamera by remember { mutableStateOf(false) }
+    var showSupportedFlowersDialog by rememberSaveable { mutableStateOf(false) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
@@ -212,6 +218,7 @@ fun PredictionScreen(
                     previewBitmap = null
                     onClearImage()
                 },
+                onShowSupportedFlowers = { showSupportedFlowersDialog = true },
                 onPredict = onPredict
             )
 
@@ -219,6 +226,12 @@ fun PredictionScreen(
                 PredictionResultCard(result = result)
             }
         }
+    }
+
+    if (showSupportedFlowersDialog) {
+        SupportedFlowersDialog(
+            onDismiss = { showSupportedFlowersDialog = false }
+        )
     }
 }
 
@@ -374,6 +387,7 @@ private fun ImagePickerCard(
     onOpenCamera: () -> Unit,
     onPickImage: () -> Unit,
     onClearImage: () -> Unit,
+    onShowSupportedFlowers: () -> Unit,
     onPredict: () -> Unit
 ) {
     Card(
@@ -452,6 +466,14 @@ private fun ImagePickerCard(
                 Text("Temizle")
             }
 
+            OutlinedButton(
+                onClick = onShowSupportedFlowers,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isPredicting
+            ) {
+                Text("Desteklenen cicekleri gor")
+            }
+
             Button(
                 onClick = onPredict,
                 modifier = Modifier
@@ -478,6 +500,41 @@ private fun ImagePickerCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SupportedFlowersDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Desteklenen cicekler") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SupportedFlowers.items.forEach { flower ->
+                    SupportedFlowerRow(flower = flower)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Tamam")
+            }
+        }
+    )
+}
+
+@Composable
+private fun SupportedFlowerRow(flower: SupportedFlower) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            text = flower.displayName,
+            style = MaterialTheme.typography.titleSmall
+        )
+        Text(
+            text = flower.scientificName,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

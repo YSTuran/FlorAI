@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import yusufs.turan.florai.domain.user.UserProfile
 import yusufs.turan.florai.ui.common.BackNavigationIcon
@@ -53,6 +56,7 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onSaveDisplayName: (String) -> Unit,
+    onDeleteAccount: (String) -> Unit,
     onMessagesShown: () -> Unit,
     onProfileSaved: () -> Unit,
     modifier: Modifier = Modifier
@@ -61,6 +65,8 @@ fun ProfileScreen(
     var isEditing by rememberSaveable { mutableStateOf(false) }
     var editedDisplayName by rememberSaveable { mutableStateOf("") }
     var showSaveDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    var deletePassword by rememberSaveable { mutableStateOf("") }
     val profile = uiState.profile
 
     LaunchedEffect(Unit) {
@@ -124,6 +130,7 @@ fun ProfileScreen(
                         profile = profile,
                         isEditing = isEditing,
                         isSaving = uiState.isSaving,
+                        isDeletingAccount = uiState.isDeletingAccount,
                         editedDisplayName = editedDisplayName,
                         onEdit = {
                             editedDisplayName = profile.displayName.orEmpty()
@@ -134,7 +141,11 @@ fun ProfileScreen(
                             editedDisplayName = profile.displayName.orEmpty()
                             isEditing = false
                         },
-                        onRequestSave = { showSaveDialog = true }
+                        onRequestSave = { showSaveDialog = true },
+                        onRequestDeleteAccount = {
+                            deletePassword = ""
+                            showDeleteDialog = true
+                        }
                     )
                 }
             }
@@ -167,6 +178,62 @@ fun ProfileScreen(
             }
         )
     }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!uiState.isDeletingAccount) {
+                    showDeleteDialog = false
+                }
+            },
+            title = { Text("Hesabi sil") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Bu islem profil bilgilerini, tahmin gecmisini ve kaydedilen gorselleri siler. Devam etmek icin sifreni gir."
+                    )
+                    OutlinedTextField(
+                        value = deletePassword,
+                        onValueChange = { deletePassword = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isDeletingAccount,
+                        singleLine = true,
+                        label = { Text("Sifre") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { onDeleteAccount(deletePassword) },
+                    enabled = !uiState.isDeletingAccount && deletePassword.isNotBlank()
+                ) {
+                    if (uiState.isDeletingAccount) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Hesabi sil",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    enabled = !uiState.isDeletingAccount
+                ) {
+                    Text("Vazgec")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -174,11 +241,13 @@ private fun ProfileContent(
     profile: UserProfile,
     isEditing: Boolean,
     isSaving: Boolean,
+    isDeletingAccount: Boolean,
     editedDisplayName: String,
     onEdit: () -> Unit,
     onDisplayNameChange: (String) -> Unit,
     onCancelEdit: () -> Unit,
-    onRequestSave: () -> Unit
+    onRequestSave: () -> Unit,
+    onRequestDeleteAccount: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -273,6 +342,24 @@ private fun ProfileContent(
                 ProfileRow(label = "Olusturulma", value = profile.createdAt.toDisplayDate())
                 ProfileRow(label = "Guncellenme", value = profile.updatedAt.toDisplayDate())
                 ProfileRow(label = "Son etkinlik", value = profile.lastActiveAt.toDisplayDate())
+            }
+        }
+
+        OutlinedButton(
+            onClick = onRequestDeleteAccount,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isSaving && !isDeletingAccount,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            if (isDeletingAccount) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text("Hesabi sil")
             }
         }
     }
