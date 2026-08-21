@@ -1,23 +1,13 @@
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, UploadFile, status
+from fastapi import FastAPI
 
-from .auth import CurrentUser, get_current_user
+from .api import history, predictions, root, users
 from .config import get_settings
-from .firestore_repository import FirestoreRepository, MAX_HISTORY_ITEMS
-from .flower_catalog import get_flower_by_model_label
 from .model_service import FlowerClassifier
-from .schemas import (
-    AppInfoResponse,
-    DeleteResponse,
-    HealthResponse,
-    PredictResponse,
-    PredictionHistoryItem,
-    PredictionHistoryResponse,
-    PredictionResult,
-    UserProfile,
-    UserProfileUpdate,
-)
+from .repositories.flower_repository import FlowerRepository
+from .repositories.prediction_history_repository import PredictionHistoryRepository
+from .repositories.user_repository import UserRepository
 from .storage_service import StorageService
 
 
@@ -29,240 +19,18 @@ async def lifespan(app: FastAPI):
         confidence_threshold=settings.confidence_threshold,
     )
     classifier.load()
+
     app.state.classifier = classifier
-    app.state.firestore_repository = FirestoreRepository()
+    app.state.flower_repository = FlowerRepository()
+    app.state.user_repository = UserRepository()
+    app.state.prediction_history_repository = PredictionHistoryRepository()
     app.state.storage_service = StorageService()
     yield
 
 
 app = FastAPI(title=get_settings().app_name, version="0.1.0", lifespan=lifespan)
 
-
-def get_classifier(request: Request) -> FlowerClassifier:
-    return request.app.state.classifier
-
-
-def get_firestore_repository(request: Request) -> FirestoreRepository:
-    return request.app.state.firestore_repository
-
-
-def get_storage_service(request: Request) -> StorageService:
-    return request.app.state.storage_service
-
-
-@app.get("/", response_model=AppInfoResponse)
-async def root(classifier: FlowerClassifier = Depends(get_classifier)) -> AppInfoResponse:
-    settings = get_settings()
-    return AppInfoResponse(
-        appName=settings.app_name,
-        version=app.version,
-        description=(
-            "FlorAI is a FastAPI backend that identifies flower images and "
-            "returns botanical information for supported classes."
-        ),
-        modelLoaded=classifier.is_loaded,
-        classCount=len(classifier.names),
-        classes=list(classifier.names.values()),
-        firestoreEnabled=settings.firestore_enabled,
-        storageEnabled=bool(settings.firebase_storage_bucket),
-        endpoints={
-            "health": "GET /health",
-            "predict": "POST /predict",
-            "currentUser": "GET /users/me",
-            "updateCurrentUser": "PUT /users/me",
-            "deleteCurrentUser": "DELETE /users/me",
-            "predictionHistory": "GET /prediction-history",
-            "predictionHistoryDetail": "GET /prediction-history/{prediction_id}",
-            "deletePrediction": "DELETE /prediction-history/{prediction_id}",
-            "deleteAllPredictions": "DELETE /prediction-history",
-        },
-    )
-
-
-@app.get("/health", response_model=HealthResponse)
-async def health(classifier: FlowerClassifier = Depends(get_classifier)) -> HealthResponse:
-    settings = get_settings()
-    return HealthResponse(
-        status="ok",
-        modelLoaded=classifier.is_loaded,
-        classCount=len(classifier.names),
-        classes=list(classifier.names.values()),
-        firestoreEnabled=settings.firestore_enabled,
-        storageEnabled=bool(settings.firebase_storage_bucket),
-    )
-
-
-@app.post("/predict", response_model=PredictResponse)
-async def predict(
-    image: UploadFile = File(...),
-    current_user: CurrentUser = Depends(get_current_user),
-    classifier: FlowerClassifier = Depends(get_classifier),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-    storage_service: StorageService = Depends(get_storage_service),
-) -> PredictResponse:
-    settings = get_settings()
-
-    if image.content_type and not image.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Only image uploads are supported.",
-        )
-
-    image_bytes = await image.read()
-    if not image_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image file is empty.",
-        )
-
-    max_bytes = settings.max_image_size_mb * 1024 * 1024
-    if len(image_bytes) > max_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"Image must be smaller than {settings.max_image_size_mb} MB.",
-        )
-
-    predictions = classifier.predict(image_bytes=image_bytes, top_k=settings.top_k)
-    best_prediction = predictions[0]
-    flower = firestore_repository.get_flower(best_prediction.flowerId)
-    if flower is None:
-        flower = get_flower_by_model_label(best_prediction.modelLabel)
-
-    low_confidence = best_prediction.confidence < settings.confidence_threshold
-    prediction_id = firestore_repository.create_prediction_history_id()
-    image_url = storage_service.upload_prediction_image(
-        user=current_user,
-        prediction_id=prediction_id,
-        image_bytes=image_bytes,
-        content_type=image.content_type,
-        filename=image.filename,
-    )
-    try:
-        prediction_id = firestore_repository.create_prediction_history(
-            user=current_user,
-            best_prediction=best_prediction,
-            top_predictions=predictions,
-            low_confidence=low_confidence,
-            prediction_id=prediction_id,
-            image_url=image_url,
-        )
-    except HTTPException:
-        if prediction_id is not None:
-            storage_service.delete_prediction_image(
-                user=current_user,
-                prediction_id=prediction_id,
-            )
-        raise
-
-    firestore_repository.record_prediction_for_user(current_user)
-
-    return PredictResponse(
-        status="low_confidence" if low_confidence else "success",
-        predictionId=prediction_id,
-        result=PredictionResult(
-            flowerId=best_prediction.flowerId,
-            classId=best_prediction.classId,
-            modelLabel=best_prediction.modelLabel,
-            name=flower.commonName if flower else best_prediction.displayName,
-            scientificName=flower.scientificName if flower else None,
-            confidence=best_prediction.confidence,
-            lowConfidence=low_confidence,
-            height=flower.height if flower else None,
-            habitats=flower.habitats if flower else [],
-            bloomMonths=flower.bloomMonths if flower else [],
-            details=flower.details if flower else None,
-            extraFacts=flower.extraFacts if flower else [],
-        ),
-    )
-
-
-@app.get("/users/me", response_model=UserProfile)
-async def get_current_user_profile(
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-) -> UserProfile:
-    profile = firestore_repository.get_user_profile(current_user)
-    return UserProfile(**profile)
-
-
-@app.put("/users/me", response_model=UserProfile)
-async def update_current_user_profile(
-    payload: UserProfileUpdate,
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-) -> UserProfile:
-    profile = firestore_repository.update_user_profile(
-        user=current_user,
-        display_name=payload.displayName,
-    )
-    return UserProfile(**profile)
-
-
-@app.delete("/users/me", response_model=DeleteResponse)
-async def delete_current_user_data(
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-    storage_service: StorageService = Depends(get_storage_service),
-) -> DeleteResponse:
-    deleted_count = firestore_repository.delete_user_data(current_user)
-    storage_service.delete_user_prediction_images(user=current_user)
-    return DeleteResponse(deletedCount=deleted_count)
-
-
-@app.get("/prediction-history", response_model=PredictionHistoryResponse)
-async def list_prediction_history(
-    limit: int = Query(default=MAX_HISTORY_ITEMS, ge=1, le=MAX_HISTORY_ITEMS),
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-) -> PredictionHistoryResponse:
-    items = firestore_repository.list_prediction_history(
-        user=current_user,
-        limit=limit,
-    )
-    return PredictionHistoryResponse(
-        items=[PredictionHistoryItem(**item) for item in items]
-    )
-
-
-@app.get("/prediction-history/{prediction_id}", response_model=PredictionHistoryItem)
-async def get_prediction_history_item(
-    prediction_id: str,
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-) -> PredictionHistoryItem:
-    item = firestore_repository.get_prediction_history_item(
-        user=current_user,
-        prediction_id=prediction_id,
-    )
-    return PredictionHistoryItem(**item)
-
-
-@app.delete("/prediction-history/{prediction_id}", response_model=DeleteResponse)
-async def delete_prediction_history_item(
-    prediction_id: str,
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-    storage_service: StorageService = Depends(get_storage_service),
-) -> DeleteResponse:
-    deleted_count = firestore_repository.delete_prediction_history_item(
-        user=current_user,
-        prediction_id=prediction_id,
-    )
-    if deleted_count:
-        storage_service.delete_prediction_image(
-            user=current_user,
-            prediction_id=prediction_id,
-        )
-    return DeleteResponse(deletedCount=deleted_count)
-
-
-@app.delete("/prediction-history", response_model=DeleteResponse)
-async def delete_prediction_history(
-    current_user: CurrentUser = Depends(get_current_user),
-    firestore_repository: FirestoreRepository = Depends(get_firestore_repository),
-    storage_service: StorageService = Depends(get_storage_service),
-) -> DeleteResponse:
-    deleted_count = firestore_repository.delete_prediction_history(current_user)
-    if deleted_count:
-        storage_service.delete_user_prediction_images(user=current_user)
-    return DeleteResponse(deletedCount=deleted_count)
+app.include_router(root.router)
+app.include_router(predictions.router)
+app.include_router(users.router)
+app.include_router(history.router)
