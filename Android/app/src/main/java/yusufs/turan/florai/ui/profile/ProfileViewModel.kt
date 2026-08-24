@@ -20,11 +20,22 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    private var sessionVersion: Int = 0
+
     fun loadProfile() {
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = userRepository.getCurrentUserProfile()
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 state.copy(
                     isLoading = false,
@@ -44,12 +55,21 @@ class ProfileViewModel @Inject constructor(
             return
         }
 
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(isSaving = true, errorMessage = null, successMessage = null)
             }
 
             val result = userRepository.updateCurrentUserProfile(cleanedDisplayName)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             if (result.isFailure) {
                 _uiState.update {
                     it.copy(
@@ -62,6 +82,10 @@ class ProfileViewModel @Inject constructor(
             }
 
             val authResult = authRepository.updateDisplayName(cleanedDisplayName)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 state.copy(
                     profile = result.getOrNull(),
@@ -89,12 +113,21 @@ class ProfileViewModel @Inject constructor(
             return
         }
 
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(isDeletingAccount = true, errorMessage = null, successMessage = null)
             }
 
             val reauthResult = authRepository.reauthenticateWithPassword(password)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             if (reauthResult.isFailure) {
                 _uiState.update {
                     it.copy(
@@ -107,6 +140,10 @@ class ProfileViewModel @Inject constructor(
             }
 
             val dataResult = userRepository.deleteCurrentUserData()
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             if (dataResult.isFailure) {
                 _uiState.update {
                     it.copy(
@@ -119,6 +156,10 @@ class ProfileViewModel @Inject constructor(
             }
 
             val deleteResult = authRepository.deleteCurrentUser()
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(
                     profile = if (deleteResult.isSuccess) null else it.profile,
@@ -137,6 +178,11 @@ class ProfileViewModel @Inject constructor(
 
     fun clearMessages() {
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
+    }
+
+    fun resetSessionState() {
+        sessionVersion += 1
+        _uiState.value = ProfileUiState()
     }
 
     private fun validateDisplayName(displayName: String): String? {

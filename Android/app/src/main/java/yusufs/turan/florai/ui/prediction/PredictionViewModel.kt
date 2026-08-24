@@ -22,6 +22,7 @@ class PredictionViewModel @Inject constructor(
     private var selectedImage: SelectedImage? = null
     private var selectedImageKey: String? = null
     private var lastPredictedImageKey: String? = null
+    private var sessionVersion: Int = 0
 
     fun setSelectedImage(image: SelectedImage) {
         val imageKey = image.key()
@@ -38,10 +39,20 @@ class PredictionViewModel @Inject constructor(
     }
 
     fun clearSelectedImage() {
+        resetSelectedImage()
+        _uiState.value = PredictionUiState()
+    }
+
+    fun resetSessionState() {
+        sessionVersion += 1
+        resetSelectedImage()
+        _uiState.value = PredictionUiState()
+    }
+
+    private fun resetSelectedImage() {
         selectedImage = null
         selectedImageKey = null
         lastPredictedImageKey = null
-        _uiState.value = PredictionUiState()
     }
 
     fun showError(message: String) {
@@ -62,12 +73,21 @@ class PredictionViewModel @Inject constructor(
             return
         }
 
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(isPredicting = true, errorMessage = null)
             }
 
             val result = predictionRepository.predict(image)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             if (result.isSuccess) {
                 lastPredictedImageKey = selectedImageKey
             }

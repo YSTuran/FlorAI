@@ -20,6 +20,7 @@ class PredictionHistoryDetailViewModel @Inject constructor(
     val uiState: StateFlow<PredictionHistoryDetailUiState> = _uiState.asStateFlow()
 
     private var lastRequestedPredictionId: String? = null
+    private var sessionVersion: Int = 0
 
     fun loadDetail(
         predictionId: String,
@@ -51,12 +52,21 @@ class PredictionHistoryDetailViewModel @Inject constructor(
         }
 
         lastRequestedPredictionId = predictionId
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update {
                 it.copy(isLoading = true, errorMessage = null)
             }
 
             val result = predictionRepository.getPredictionHistoryItem(predictionId)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 if (result.isSuccess) {
                     state.copy(
@@ -77,5 +87,11 @@ class PredictionHistoryDetailViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun resetSessionState() {
+        sessionVersion += 1
+        lastRequestedPredictionId = null
+        _uiState.value = PredictionHistoryDetailUiState()
     }
 }

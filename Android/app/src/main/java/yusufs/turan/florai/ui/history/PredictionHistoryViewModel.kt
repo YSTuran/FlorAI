@@ -18,11 +18,22 @@ class PredictionHistoryViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(PredictionHistoryUiState())
     val uiState: StateFlow<PredictionHistoryUiState> = _uiState.asStateFlow()
 
+    private var sessionVersion: Int = 0
+
     fun loadHistory() {
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             val result = predictionRepository.getPredictionHistory()
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 state.copy(
                     isLoading = false,
@@ -35,10 +46,19 @@ class PredictionHistoryViewModel @Inject constructor(
     }
 
     fun deleteItem(predictionId: String) {
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
 
             val result = predictionRepository.deletePredictionHistoryItem(predictionId)
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 if (result.isSuccess) {
                     state.copy(
@@ -57,10 +77,19 @@ class PredictionHistoryViewModel @Inject constructor(
     }
 
     fun deleteAll() {
+        val requestSessionVersion = sessionVersion
         viewModelScope.launch {
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
 
             val result = predictionRepository.deletePredictionHistory()
+            if (requestSessionVersion != sessionVersion) {
+                return@launch
+            }
+
             _uiState.update { state ->
                 if (result.isSuccess) {
                     state.copy(isDeleting = false, items = emptyList())
@@ -77,5 +106,10 @@ class PredictionHistoryViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun resetSessionState() {
+        sessionVersion += 1
+        _uiState.value = PredictionHistoryUiState()
     }
 }

@@ -1,8 +1,12 @@
 package yusufs.turan.florai
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import yusufs.turan.florai.ui.auth.AuthScreen
 import yusufs.turan.florai.ui.auth.AuthViewModel
@@ -26,6 +30,28 @@ fun FlorAIApp(
     val predictionHistoryDetailUiState by predictionHistoryDetailViewModel.uiState.collectAsState()
     val profileUiState by profileViewModel.uiState.collectAsState()
     val currentUser = authUiState.currentUser
+    val verifiedUserUid = currentUser?.takeIf { it.emailVerified }?.uid
+    var lastVerifiedUserUid by remember { mutableStateOf<String?>(null) }
+
+    fun resetSessionState() {
+        predictionViewModel.resetSessionState()
+        predictionHistoryViewModel.resetSessionState()
+        predictionHistoryDetailViewModel.resetSessionState()
+        profileViewModel.resetSessionState()
+    }
+
+    fun signOutAndResetSession() {
+        resetSessionState()
+        lastVerifiedUserUid = null
+        authViewModel.signOut()
+    }
+
+    LaunchedEffect(verifiedUserUid) {
+        if (lastVerifiedUserUid != verifiedUserUid) {
+            resetSessionState()
+            lastVerifiedUserUid = verifiedUserUid
+        }
+    }
 
     if (currentUser == null || !currentUser.emailVerified) {
         AuthScreen(
@@ -35,7 +61,7 @@ fun FlorAIApp(
             onForgotPassword = authViewModel::sendPasswordResetEmail,
             onResendVerification = authViewModel::resendEmailVerification,
             onRefreshVerification = authViewModel::refreshEmailVerification,
-            onSignOut = authViewModel::signOut,
+            onSignOut = { signOutAndResetSession() },
             onMessagesShown = authViewModel::clearMessages
         )
         return
@@ -62,6 +88,6 @@ fun FlorAIApp(
         onDeleteAccount = profileViewModel::deleteAccount,
         onProfileMessagesShown = profileViewModel::clearMessages,
         onProfileSaved = authViewModel::refreshCurrentUser,
-        onSignOut = authViewModel::signOut
+        onSignOut = { signOutAndResetSession() }
     )
 }
