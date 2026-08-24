@@ -47,35 +47,35 @@ class UserRepository(
                 val detail = HttpErrorParser.detail(error)
                 when {
                     detail == "Missing Firebase bearer token." ->
-                        "Oturum bilgisi bulunamadi. Tekrar giris yap."
+                        "Oturum bilgisi bulunamadı. Tekrar giriş yap."
                     detail == "Invalid Firebase token." ->
-                        "Oturum suresi dolmus olabilir. Tekrar giris yap."
+                        "Oturum süresi dolmuş olabilir. Tekrar giriş yap."
                     detail == "Display name is required." ->
-                        "Kullanici ismi bos birakilamaz."
+                        "Kullanıcı ismi boş bırakılamaz."
                     detail == "User profile is not available." ->
-                        "Profil bilgileri su anda kullanilamiyor."
+                        "Profil bilgileri şu anda kullanılamıyor."
                     detail == "User data could not be deleted." ->
-                        "Kullanici verileri silinemedi. Lutfen tekrar dene."
+                        "Kullanıcı verileri silinemedi. Lütfen tekrar dene."
                     detail == "Prediction history is not available." ->
-                        "Tahmin gecmisi su anda temizlenemiyor."
+                        "Tahmin geçmişi şu anda temizlenemiyor."
                     detail == "Firestore is not available." ->
-                        "Firestore baglantisi su anda kullanilamiyor."
+                        "Firestore bağlantısı şu anda kullanılamıyor."
                     else -> when (error.code()) {
-                        400 -> "Profil bilgileri gecersiz."
-                        401 -> "Oturum dogrulanamadi. Tekrar giris yap."
-                        403 -> "Bu profil icin yetkin yok."
-                        422 -> "Kullanici ismi 2-40 karakter arasinda olmali."
-                        500 -> "Sunucuda beklenmeyen bir hata olustu."
-                        503 -> "Profil bilgileri su anda kullanilamiyor."
-                        else -> "Sunucu yaniti alinamadi. Kod: ${error.code()}"
+                        400 -> "Profil bilgileri geçersiz."
+                        401 -> "Oturum doğrulanamadı. Tekrar giriş yap."
+                        403 -> "Bu profil için yetkin yok."
+                        422 -> "Kullanıcı ismi 2-40 karakter arasında olmalı."
+                        500 -> "Sunucuda beklenmeyen bir hata oluştu."
+                        503 -> "Profil bilgileri şu anda kullanılamıyor."
+                        else -> "Sunucu yanıtı alınamadı. Kod: ${error.code()}"
                     }
                 }
             }
-            is SocketTimeoutException -> "Backend yanit vermekte gecikti. Lutfen tekrar dene."
-            is ConnectException -> "Backend'e ulasilamadi. Sunucunun calistigini kontrol et."
-            is UnknownHostException -> "Backend adresi bulunamadi. Internet baglantisini kontrol et."
-            is IOException -> "Backend baglantisi kurulamadi. Internetini kontrol et."
-            else -> error.localizedMessage ?: "Islem tamamlanamadi."
+            is SocketTimeoutException -> "Backend yanıt vermekte gecikti. Lütfen tekrar dene."
+            is ConnectException -> "Backend'e ulaşılamadı. Sunucunun çalıştığını kontrol et."
+            is UnknownHostException -> "Backend adresi bulunamadı. İnternet bağlantısını kontrol et."
+            is IOException -> "Backend bağlantısı kurulamadı. İnternetini kontrol et."
+            else -> error.localizedMessage ?: "İşlem tamamlanamadı."
         }
     }
 }

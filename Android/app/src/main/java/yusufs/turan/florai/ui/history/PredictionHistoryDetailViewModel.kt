@@ -30,7 +30,7 @@ class PredictionHistoryDetailViewModel @Inject constructor(
                 it.copy(
                     item = null,
                     isLoading = false,
-                    errorMessage = "Tahmin kaydi bulunamadi."
+                    errorMessage = "Tahmin kaydı bulunamadı."
                 )
             }
             return

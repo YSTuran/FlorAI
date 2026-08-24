@@ -110,7 +110,7 @@ fun PredictionScreen(
             }
 
             if (selectedImage == null || bitmap == null) {
-                onImageError("Gorsel okunamadi.")
+                onImageError("Görsel okunamadı.")
             } else {
                 previewBitmap = bitmap
                 onImageSelected(selectedImage)
@@ -158,7 +158,7 @@ fun PredictionScreen(
                     }
 
                     if (selectedImage == null || bitmap == null) {
-                        onImageError("Kamera gorseli okunamadi.")
+                        onImageError("Kamera görseli okunamadı.")
                     } else {
                         previewBitmap = bitmap
                         onImageSelected(selectedImage)
@@ -181,7 +181,7 @@ fun PredictionScreen(
                     Column {
                         Text("Tahmin")
                         Text(
-                            text = "Gorsel sec ve cicegi tanimla",
+                            text = "Görsel seç ve çiçeği tanımla",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -301,7 +301,7 @@ private fun CameraCaptureScreen(
                                     )
                                     imageCapture = capture
                                 }.onFailure {
-                                    onError("Kamera baslatilamadi.")
+                                    onError("Kamera başlatılamadı.")
                                 }
                             },
                             ContextCompat.getMainExecutor(viewContext)
@@ -320,7 +320,7 @@ private fun CameraCaptureScreen(
                     onClick = {
                         val capture = imageCapture
                         if (capture == null) {
-                            onError("Kamera henuz hazir degil.")
+                            onError("Kamera henüz hazır değil.")
                             return@Button
                         }
 
@@ -345,7 +345,7 @@ private fun CameraCaptureScreen(
 
                                 override fun onError(exception: ImageCaptureException) {
                                     isCapturing = false
-                                    onError("Fotograf cekilemedi.")
+                                    onError("Fotoğraf çekilemedi.")
                                 }
                             }
                         )
@@ -369,7 +369,7 @@ private fun CameraCaptureScreen(
                             Text("Kaydediliyor")
                         }
                     } else {
-                        Text("Fotograf cek")
+                        Text("Fotoğraf çek")
                     }
                 }
             }
@@ -417,7 +417,7 @@ private fun ImagePickerCard(
             ) {
                 if (previewBitmap == null) {
                     Text(
-                        text = "Gorsel secilmedi",
+                        text = "Görsel seçilmedi",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
@@ -471,7 +471,7 @@ private fun ImagePickerCard(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isPredicting
             ) {
-                Text("Desteklenen cicekleri gor")
+                Text("Desteklenen çiçekleri gör")
             }
 
             Button(
@@ -494,7 +494,7 @@ private fun ImagePickerCard(
                         Text("Tahmin ediliyor")
                     }
                 } else if (hasResult) {
-                    Text("Tahmin tamamlandi")
+                    Text("Tahmin tamamlandı")
                 } else {
                     Text("Tahmin et")
                 }
@@ -507,7 +507,7 @@ private fun ImagePickerCard(
 private fun SupportedFlowersDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Desteklenen cicekler") },
+        title = { Text("Desteklenen çiçekler") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SupportedFlowers.items.forEach { flower ->
@@ -577,11 +577,11 @@ private fun PredictionResultCard(result: PredictionResult) {
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Dusuk guvenli tahmin",
+                            text = "Düşük güvenli tahmin",
                             style = MaterialTheme.typography.titleSmall
                         )
                         Text(
-                            text = "Model bu sonuc icin yeterince emin degil. Daha net, iyi aydinlatilmis ve cicegi merkeze alan bir fotografla tekrar deneyebilirsin.",
+                            text = "Model bu sonuç için yeterince emin değil. Daha net, iyi aydınlatılmış ve çiçeği merkeze alan bir fotoğrafla tekrar deneyebilirsin.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -593,11 +593,11 @@ private fun PredictionResultCard(result: PredictionResult) {
             }
 
             if (result.bloomMonths.isNotEmpty()) {
-                InfoChips(label = "Ciceklenme", values = result.bloomMonths)
+                InfoChips(label = "Çiçeklenme", values = result.bloomMonths)
             }
 
             if (result.habitats.isNotEmpty()) {
-                InfoChips(label = "Yasam alanlari", values = result.habitats)
+                InfoChips(label = "Yaşam alanları", values = result.habitats)
             }
 
             result.details?.let {

@@ -81,7 +81,7 @@ class AuthViewModel @Inject constructor(
                     state.copy(
                         currentUser = authRepository.currentUser,
                         isSubmitting = false,
-                        successMessage = "Dogrulama e-postasi gonderildi."
+                        successMessage = "Doğrulama e-postası gönderildi."
                     )
                 }
             }
@@ -115,7 +115,7 @@ class AuthViewModel @Inject constructor(
                     errorMessage = result.exceptionOrNull()
                         ?.let(authRepository::getReadableMessage),
                     successMessage = if (result.isSuccess) {
-                        "Sifre sifirlama e-postasi gonderildi."
+                        "Şifre sıfırlama e-postası gönderildi."
                     } else {
                         null
                     }
@@ -136,7 +136,7 @@ class AuthViewModel @Inject constructor(
                     errorMessage = result.exceptionOrNull()
                         ?.let(authRepository::getReadableMessage),
                     successMessage = if (result.isSuccess) {
-                        "Dogrulama e-postasi tekrar gonderildi."
+                        "Doğrulama e-postası tekrar gönderildi."
                     } else {
                         null
                     }
@@ -162,7 +162,7 @@ class AuthViewModel @Inject constructor(
                             errorMessage = profileResult.exceptionOrNull()
                                 ?.let(userRepository::getReadableMessage),
                             successMessage = if (profileResult.isSuccess) {
-                                "E-posta adresi dogrulandi."
+                                "E-posta adresi doğrulandı."
                             } else {
                                 null
                             }
@@ -179,11 +179,11 @@ class AuthViewModel @Inject constructor(
                     errorMessage = when {
                         result.isFailure -> result.exceptionOrNull()
                             ?.let(authRepository::getReadableMessage)
-                        currentUser?.emailVerified == false -> "E-posta adresi henuz dogrulanmamis."
+                        currentUser?.emailVerified == false -> "E-posta adresi henüz doğrulanmamış."
                         else -> null
                     },
                     successMessage = if (result.isSuccess && currentUser?.emailVerified == true) {
-                        "E-posta adresi dogrulandi."
+                        "E-posta adresi doğrulandı."
                     } else {
                         null
                     }
@@ -231,7 +231,7 @@ class AuthViewModel @Inject constructor(
                     isSubmitting = false,
                     errorMessage = result.exceptionOrNull()?.let(authRepository::getReadableMessage)
                         ?: if (result.isSuccess && currentUser?.emailVerified == false) {
-                            "E-posta adresini dogrulaman gerekiyor."
+                            "E-posta adresini doğrulaman gerekiyor."
                         } else {
                             null
                         }

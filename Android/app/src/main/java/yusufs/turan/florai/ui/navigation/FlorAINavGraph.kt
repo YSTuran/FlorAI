@@ -188,7 +188,7 @@ private fun MissingHistoryDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tahmin detayi") },
+                title = { Text("Tahmin detayı") },
                 navigationIcon = { BackNavigationIcon(onBack = onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
@@ -206,9 +206,9 @@ private fun MissingHistoryDetailScreen(
         ) {
             Text(
                 text = when {
-                    isLoading -> "Kayit yukleniyor"
+                    isLoading -> "Kayıt yükleniyor"
                     errorMessage != null -> errorMessage
-                    else -> "Tahmin kaydi bulunamadi"
+                    else -> "Tahmin kaydı bulunamadı"
                 },
                 style = MaterialTheme.typography.titleLarge
             )

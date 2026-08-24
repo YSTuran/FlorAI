@@ -74,7 +74,7 @@ fun SettingsScreen(
                         onClick = onSignOut,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Cikis yap")
+                        Text("Çıkış yap")
                     }
                 }
             }

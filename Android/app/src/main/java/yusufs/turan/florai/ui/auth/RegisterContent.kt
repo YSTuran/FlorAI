@@ -44,8 +44,8 @@ fun RegisterContent(
     ) {
         BackNavigationIcon(onBack = onBack)
         AuthHeader(
-            title = "Kayit ol",
-            subtitle = "Yeni FlorAI hesabini olustur"
+            title = "Kayıt ol",
+            subtitle = "Yeni FlorAI hesabını oluştur"
         )
 
         OutlinedTextField(
@@ -54,7 +54,7 @@ fun RegisterContent(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isSubmitting,
             singleLine = true,
-            label = { Text("Kullanici adi") },
+            label = { Text("Kullanıcı adı") },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words
             )
@@ -76,7 +76,7 @@ fun RegisterContent(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isSubmitting,
             singleLine = true,
-            label = { Text("Sifre") },
+            label = { Text("Şifre") },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
@@ -87,14 +87,14 @@ fun RegisterContent(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isSubmitting,
             singleLine = true,
-            label = { Text("Sifre tekrar") },
+            label = { Text("Şifre tekrarı") },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
         )
 
         PrimaryAuthButton(
-            text = "Kayit ol",
-            loadingText = "Kayit olusturuluyor",
+            text = "Kayıt ol",
+            loadingText = "Kayıt oluşturuluyor",
             isSubmitting = isSubmitting,
             onClick = { onRegister(displayName, email, password, confirmPassword) }
         )
@@ -105,14 +105,14 @@ fun RegisterContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Zaten hesabin var mi?",
+                text = "Zaten hesabın var mı?",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             TextButton(
                 onClick = onLoginClick,
                 enabled = !isSubmitting
             ) {
-                Text("Giris yap")
+                Text("Giriş yap")
             }
         }
     }

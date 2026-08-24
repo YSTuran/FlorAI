@@ -72,9 +72,9 @@ fun PredictionHistoryScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Tahmin Gecmisi")
+                        Text("Tahmin Geçmişi")
                         Text(
-                            text = "${uiState.items.size} kayit",
+                            text = "${uiState.items.size} kayıt",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -86,7 +86,7 @@ fun PredictionHistoryScreen(
                             onClick = { showDeleteAllDialog = true },
                             enabled = !uiState.isDeleting
                         ) {
-                            Text("Tumunu sil")
+                            Text("Tümünü sil")
                         }
                     }
                 },
@@ -138,7 +138,7 @@ fun PredictionHistoryScreen(
         AlertDialog(
             onDismissRequest = { itemPendingDelete = null },
             title = { Text("Tahmini sil") },
-            text = { Text("${item.displayName} tahmin kaydi silinsin mi?") },
+            text = { Text("${item.displayName} tahmin kaydı silinsin mi?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -151,7 +151,7 @@ fun PredictionHistoryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { itemPendingDelete = null }) {
-                    Text("Vazgec")
+                    Text("Vazgeç")
                 }
             }
         )
@@ -160,8 +160,8 @@ fun PredictionHistoryScreen(
     if (showDeleteAllDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteAllDialog = false },
-            title = { Text("Tum gecmisi sil") },
-            text = { Text("Tum tahmin gecmisin kalici olarak silinsin mi?") },
+            title = { Text("Tüm geçmişi sil") },
+            text = { Text("Tüm tahmin geçmişin kalıcı olarak silinsin mi?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -169,12 +169,12 @@ fun PredictionHistoryScreen(
                         onDeleteAll()
                     }
                 ) {
-                    Text("Tumunu sil")
+                    Text("Tümünü sil")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteAllDialog = false }) {
-                    Text("Vazgec")
+                    Text("Vazgeç")
                 }
             }
         )
@@ -234,7 +234,7 @@ private fun HistoryItemCard(
 
             if (item.lowConfidence) {
                 Text(
-                    text = "Dusuk guvenli tahmin",
+                    text = "Düşük güvenli tahmin",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -244,7 +244,7 @@ private fun HistoryItemCard(
                 onClick = onOpenDetails,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Detaylari goster")
+                Text("Detayları göster")
             }
 
             OutlinedButton(
@@ -298,11 +298,11 @@ private fun EmptyHistory(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Gecmis kaydi yok",
+            text = "Geçmiş kaydı yok",
             style = MaterialTheme.typography.titleLarge
         )
         Text(
-            text = "Tahmin yaptikca kayitlar burada gorunecek.",
+            text = "Tahmin yaptıkça kayıtlar burada görünecek.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

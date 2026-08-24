@@ -40,7 +40,7 @@ fun PredictionHistoryDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Tahmin Detayi")
+                        Text("Tahmin Detayı")
                         Text(
                             text = item.createdAt.toDisplayDate(),
                             style = MaterialTheme.typography.bodySmall,
@@ -68,7 +68,7 @@ fun PredictionHistoryDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f),
-                emptyText = "Gorsel henuz Storage'a yuklenmedi"
+                emptyText = "Görsel henüz Storage'a yüklenmedi"
             )
 
             Card(
@@ -91,7 +91,7 @@ fun PredictionHistoryDetailScreen(
                     DetailRow(label = "Model etiketi", value = item.modelLabel)
                     if (item.lowConfidence) {
                         Text(
-                            text = "Bu kayit dusuk guvenli tahmin olarak isaretlenmis.",
+                            text = "Bu kayıt düşük güvenli tahmin olarak işaretlenmiş.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
@@ -112,7 +112,7 @@ fun PredictionHistoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Tum sinif skorlari",
+                        text = "Tüm sınıf skorları",
                         style = MaterialTheme.typography.titleLarge
                     )
                     item.detailScores().forEach { score ->

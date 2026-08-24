@@ -40,7 +40,7 @@ fun LoginContent(
     ) {
         AuthHeader(
             title = "FlorAI",
-            subtitle = "Hesabina giris yap"
+            subtitle = "Hesabına giriş yap"
         )
 
         OutlinedTextField(
@@ -60,7 +60,7 @@ fun LoginContent(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isSubmitting,
                 singleLine = true,
-                label = { Text("Sifre") },
+                label = { Text("Şifre") },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
@@ -69,13 +69,13 @@ fun LoginContent(
                 enabled = !isSubmitting,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Sifremi unuttum")
+                Text("Şifremi unuttum")
             }
         }
 
         PrimaryAuthButton(
-            text = "Giris yap",
-            loadingText = "Giris yapiliyor",
+            text = "Giriş yap",
+            loadingText = "Giriş yapılıyor",
             isSubmitting = isSubmitting,
             onClick = { onSignIn(email, password) }
         )
@@ -86,14 +86,14 @@ fun LoginContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Hesabin yok mu?",
+                text = "Hesabın yok mu?",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             TextButton(
                 onClick = onRegisterClick,
                 enabled = !isSubmitting
             ) {
-                Text("Kayit ol")
+                Text("Kayıt ol")
             }
         }
     }

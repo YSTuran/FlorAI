@@ -1,6 +1,5 @@
 package yusufs.turan.florai.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,34 +8,80 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = LeafGreenLight,
+    onPrimary = LeafGreenDark,
+    primaryContainer = LeafGreenDark,
+    onPrimaryContainer = MintContainer,
+    secondary = SageLight,
+    onSecondary = OnSageContainer,
+    secondaryContainer = DarkSurfaceContainerHigh,
+    onSecondaryContainer = DarkTextPrimary,
+    tertiary = Sunflower,
+    onTertiary = OnSunflowerContainer,
+    tertiaryContainer = CoralDark,
+    onTertiaryContainer = Color.White,
+    error = ErrorContainer,
+    onError = OnErrorContainer,
+    errorContainer = ErrorRed,
+    onErrorContainer = Color.White,
+    background = DarkBackground,
+    onBackground = DarkTextPrimary,
+    surface = DarkSurface,
+    onSurface = DarkTextPrimary,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkTextSecondary,
+    outline = SageLight,
+    outlineVariant = DarkSurfaceVariant,
+    inverseSurface = FlorAISurface,
+    inverseOnSurface = TextPrimary,
+    inversePrimary = LeafGreen,
+    surfaceTint = LeafGreenLight,
+    surfaceContainer = DarkSurfaceContainer,
+    surfaceContainerHigh = DarkSurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceVariant
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = LeafGreen,
     onPrimary = Color.White,
+    primaryContainer = MintContainer,
+    onPrimaryContainer = OnMintContainer,
+    secondary = Sage,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondaryContainer = SageContainer,
+    onSecondaryContainer = OnSageContainer,
+    tertiary = Sunflower,
+    onTertiary = OnSunflowerContainer,
+    tertiaryContainer = SunflowerContainer,
+    onTertiaryContainer = OnSunflowerContainer,
+    error = ErrorRed,
+    onError = Color.White,
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainer,
+    background = FlorAIBackground,
+    onBackground = TextPrimary,
+    surface = FlorAISurface,
+    onSurface = TextPrimary,
+    surfaceVariant = FlorAISurfaceVariant,
+    onSurfaceVariant = TextSecondary,
+    outline = FlorAIOutline,
+    outlineVariant = FlorAIOutlineVariant,
+    inverseSurface = TextPrimary,
+    inverseOnSurface = FlorAISurface,
+    inversePrimary = LeafGreenLight,
+    surfaceTint = LeafGreen,
+    surfaceContainer = FlorAISurfaceContainer,
+    surfaceContainerHigh = FlorAISurfaceContainerHigh,
+    surfaceContainerHighest = FlorAISurfaceVariant
 )
 
 @Composable
 fun FlorAITheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

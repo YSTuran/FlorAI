@@ -29,7 +29,7 @@ import java.net.URL
 fun PredictionHistoryImage(
     imageUrl: String?,
     modifier: Modifier = Modifier,
-    emptyText: String = "Gorsel URL'i bekleniyor"
+    emptyText: String = "Görsel URL'si bekleniyor"
 ) {
     var bitmap by remember(imageUrl) { mutableStateOf<ImageBitmap?>(null) }
     var didFail by remember(imageUrl) { mutableStateOf(false) }
@@ -68,7 +68,7 @@ fun PredictionHistoryImage(
             )
         } else {
             Text(
-                text = if (didFail) "Gorsel yuklenemedi" else emptyText,
+                text = if (didFail) "Görsel yüklenemedi" else emptyText,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall
             )

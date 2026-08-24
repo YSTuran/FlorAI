@@ -76,41 +76,41 @@ class PredictionRepository(
                 val detail = HttpErrorParser.detail(error)
                 when {
                     detail == "Missing Firebase bearer token." ->
-                        "Oturum bilgisi bulunamadi. Tekrar giris yap."
+                        "Oturum bilgisi bulunamadı. Tekrar giriş yap."
                     detail == "Invalid Firebase token." ->
-                        "Oturum suresi dolmus olabilir. Tekrar giris yap."
+                        "Oturum süresi dolmuş olabilir. Tekrar giriş yap."
                     detail == "Email verification is required." ->
-                        "Tahmin yapmadan once e-posta adresini dogrulaman gerekiyor."
+                        "Tahmin yapmadan önce e-posta adresini doğrulaman gerekiyor."
                     detail == "Only image uploads are supported." ->
-                        "Secilen dosya desteklenen bir gorsel degil."
+                        "Seçilen dosya desteklenen bir görsel değil."
                     detail == "Image file is empty." ->
-                        "Gorsel dosyasi bos gorunuyor. Farkli bir fotograf dene."
+                        "Görsel dosyası boş görünüyor. Farklı bir fotoğraf dene."
                     detail?.startsWith("Image must be smaller") == true ->
-                        "Gorsel boyutu cok buyuk. Daha kucuk bir fotograf sec."
+                        "Görsel boyutu çok büyük. Daha küçük bir fotoğraf seç."
                     detail == "Prediction image could not be uploaded." ->
-                        "Gorsel kaydedilemedi. Storage ayarlarini ve internet baglantini kontrol et."
+                        "Görsel kaydedilemedi. Storage ayarlarını ve internet bağlantını kontrol et."
                     detail == "Prediction history is not available." ->
-                        "Tahmin gecmisi su anda alinamiyor."
+                        "Tahmin geçmişi şu anda alınamıyor."
                     detail == "Firestore is not available." ->
-                        "Firestore baglantisi su anda kullanilamiyor."
+                        "Firestore bağlantısı şu anda kullanılamıyor."
                     else -> when (error.code()) {
-                        400 -> "Gorsel okunamadi. Lutfen farkli bir fotograf dene."
-                        401 -> "Oturum dogrulanamadi. Tekrar giris yap."
-                        403 -> "Bu islem icin hesabina izin verilmedi."
-                        404 -> "Ilgili kayit bulunamadi."
-                        413 -> "Gorsel boyutu cok buyuk."
-                        415 -> "Secilen dosya desteklenen bir gorsel degil."
-                        500 -> "Sunucuda beklenmeyen bir hata olustu."
-                        503 -> "Backend verilerine su anda ulasilamiyor."
-                        else -> "Sunucu yaniti alinamadi. Kod: ${error.code()}"
+                        400 -> "Görsel okunamadı. Lütfen farklı bir fotoğraf dene."
+                        401 -> "Oturum doğrulanamadı. Tekrar giriş yap."
+                        403 -> "Bu işlem için hesabına izin verilmedi."
+                        404 -> "İlgili kayıt bulunamadı."
+                        413 -> "Görsel boyutu çok büyük."
+                        415 -> "Seçilen dosya desteklenen bir görsel değil."
+                        500 -> "Sunucuda beklenmeyen bir hata oluştu."
+                        503 -> "Backend verilerine şu anda ulaşılamıyor."
+                        else -> "Sunucu yanıtı alınamadı. Kod: ${error.code()}"
                     }
                 }
             }
-            is SocketTimeoutException -> "Backend yanit vermekte gecikti. Lutfen tekrar dene."
-            is ConnectException -> "Backend'e ulasilamadi. Sunucunun calistigini ve telefonun ayni agda oldugunu kontrol et."
-            is UnknownHostException -> "Backend adresi bulunamadi. API adresini ve internet baglantisini kontrol et."
-            is IOException -> "Backend baglantisi kurulamadi. Internetini ve sunucunun calistigini kontrol et."
-            else -> error.localizedMessage ?: "Islem tamamlanamadi."
+            is SocketTimeoutException -> "Backend yanıt vermekte gecikti. Lütfen tekrar dene."
+            is ConnectException -> "Backend'e ulaşılamadı. Sunucunun çalıştığını ve telefonun aynı ağda olduğunu kontrol et."
+            is UnknownHostException -> "Backend adresi bulunamadı. API adresini ve internet bağlantısını kontrol et."
+            is IOException -> "Backend bağlantısı kurulamadı. İnternetini ve sunucunun çalıştığını kontrol et."
+            else -> error.localizedMessage ?: "İşlem tamamlanamadı."
         }
     }
 }

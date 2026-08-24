@@ -51,13 +51,13 @@ class PredictionViewModel @Inject constructor(
     fun predict() {
         val image = selectedImage
         if (image == null) {
-            _uiState.update { it.copy(errorMessage = "Once bir gorsel sec.") }
+            _uiState.update { it.copy(errorMessage = "Önce bir görsel seç.") }
             return
         }
 
         if (selectedImageKey == lastPredictedImageKey && _uiState.value.result != null) {
             _uiState.update {
-                it.copy(errorMessage = "Bu gorsel icin tahmin zaten yapildi. Yeni bir gorsel secerek devam edebilirsin.")
+                it.copy(errorMessage = "Bu görsel için tahmin zaten yapıldı. Yeni bir görsel seçerek devam edebilirsin.")
             }
             return
         }

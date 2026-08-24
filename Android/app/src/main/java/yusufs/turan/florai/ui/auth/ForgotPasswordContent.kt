@@ -34,8 +34,8 @@ fun ForgotPasswordContent(
     ) {
         BackNavigationIcon(onBack = onBack)
         AuthHeader(
-            title = "Sifremi unuttum",
-            subtitle = "Sifre sifirlama baglantisi e-posta adresine gonderilecek"
+            title = "Şifremi unuttum",
+            subtitle = "Şifre sıfırlama bağlantısı e-posta adresine gönderilecek"
         )
 
         OutlinedTextField(
@@ -49,8 +49,8 @@ fun ForgotPasswordContent(
         )
 
         PrimaryAuthButton(
-            text = "Sifirlama e-postasi gonder",
-            loadingText = "Gonderiliyor",
+            text = "Sıfırlama e-postası gönder",
+            loadingText = "Gönderiliyor",
             isSubmitting = isSubmitting,
             onClick = { onForgotPassword(email) }
         )

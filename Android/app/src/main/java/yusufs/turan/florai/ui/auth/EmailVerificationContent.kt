@@ -29,12 +29,12 @@ fun EmailVerificationContent(
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
         AuthHeader(
-            title = "E-postani dogrula",
-            subtitle = "${email ?: "E-posta adresine"} gonderilen dogrulama baglantisini ac."
+            title = "E-postanı doğrula",
+            subtitle = "${email ?: "E-posta adresine"} gönderilen doğrulama bağlantısını aç."
         )
 
         Text(
-            text = "Dogrulama tamamlandiktan sonra Kontrol et butonuna basabilirsin.",
+            text = "Doğrulama tamamlandıktan sonra Kontrol et butonuna basabilirsin.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -51,7 +51,7 @@ fun EmailVerificationContent(
             modifier = Modifier.fillMaxWidth(),
             enabled = !isSubmitting
         ) {
-            Text("Dogrulama e-postasini tekrar gonder")
+            Text("Doğrulama e-postasını tekrar gönder")
         }
 
         TextButton(
@@ -59,7 +59,7 @@ fun EmailVerificationContent(
             enabled = !isSubmitting,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text("Farkli hesapla giris yap")
+            Text("Farklı hesapla giriş yap")
         }
     }
 }

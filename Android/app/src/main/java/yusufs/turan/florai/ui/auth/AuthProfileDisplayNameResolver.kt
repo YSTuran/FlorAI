@@ -13,6 +13,6 @@ object AuthProfileDisplayNameResolver {
             .map { it.trim() }
             .firstOrNull { it.length >= 2 }
             ?.take(40)
-            ?: "FlorAI kullanicisi"
+            ?: "FlorAI kullanıcısı"
     }
 }

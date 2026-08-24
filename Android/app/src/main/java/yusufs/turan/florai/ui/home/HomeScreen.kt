@@ -42,7 +42,7 @@ fun HomeScreen(
                 Text(
                     text = user.displayName?.takeIf { it.isNotBlank() }
                         ?: user.email
-                        ?: "Oturum acik",
+                        ?: "Oturum açık",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -50,22 +50,22 @@ fun HomeScreen(
 
             NavigationCard(
                 title = "Tahmin",
-                description = "Galeriden bir cicek gorseli secip model tahmini al.",
-                actionText = "Tahmin ekranina git",
+                description = "Galeriden bir çiçek görseli seçip model tahmini al.",
+                actionText = "Tahmin ekranına git",
                 onClick = onOpenPrediction
             )
 
             NavigationCard(
-                title = "Tahmin Gecmisi",
-                description = "Daha once yaptigin tahminleri gor ve kayitlarini yonet.",
-                actionText = "Gecmise git",
+                title = "Tahmin Geçmişi",
+                description = "Daha önce yaptığın tahminleri gör ve kayıtlarını yönet.",
+                actionText = "Geçmişe git",
                 onClick = onOpenHistory,
                 outlined = true
             )
 
             NavigationCard(
                 title = "Ayarlar",
-                description = "Hesap ve uygulama ayarlarini yonet.",
+                description = "Hesap ve uygulama ayarlarını yönet.",
                 actionText = "Ayarlara git",
                 onClick = onOpenSettings,
                 outlined = true

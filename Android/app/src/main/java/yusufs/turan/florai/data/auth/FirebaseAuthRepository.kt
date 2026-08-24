@@ -133,7 +133,7 @@ class FirebaseAuthRepository(
     ) {
         val user = firebaseAuth.currentUser
         if (user == null) {
-            onResult(Result.failure(IllegalStateException("Oturum acik degil.")))
+            onResult(Result.failure(IllegalStateException("Oturum açık değil.")))
             return
         }
 
@@ -166,7 +166,7 @@ class FirebaseAuthRepository(
     ) {
         val user = firebaseAuth.currentUser
         if (user == null) {
-            onResult(Result.failure(IllegalStateException("Oturum acik degil.")))
+            onResult(Result.failure(IllegalStateException("Oturum açık değil.")))
             return
         }
 
@@ -211,7 +211,7 @@ class FirebaseAuthRepository(
         return withContext(Dispatchers.IO) {
             runCatching {
                 val user = firebaseAuth.currentUser
-                    ?: throw IllegalStateException("Oturum acik degil.")
+                    ?: throw IllegalStateException("Oturum açık değil.")
                 val profileUpdates = UserProfileChangeRequest.Builder()
                     .setDisplayName(displayName.trim())
                     .build()
@@ -227,9 +227,9 @@ class FirebaseAuthRepository(
         return withContext(Dispatchers.IO) {
             runCatching {
                 val user = firebaseAuth.currentUser
-                    ?: throw IllegalStateException("Oturum acik degil.")
+                    ?: throw IllegalStateException("Oturum açık değil.")
                 val email = user.email
-                    ?: throw IllegalStateException("E-posta bilgisi bulunamadi.")
+                    ?: throw IllegalStateException("E-posta bilgisi bulunamadı.")
                 val credential = EmailAuthProvider.getCredential(email, password)
 
                 Tasks.await(user.reauthenticate(credential), 10, TimeUnit.SECONDS)
@@ -243,7 +243,7 @@ class FirebaseAuthRepository(
         return withContext(Dispatchers.IO) {
             runCatching {
                 val user = firebaseAuth.currentUser
-                    ?: throw IllegalStateException("Oturum acik degil.")
+                    ?: throw IllegalStateException("Oturum açık değil.")
                 Tasks.await(user.delete(), 10, TimeUnit.SECONDS)
                 Unit
             }
@@ -252,14 +252,14 @@ class FirebaseAuthRepository(
 
     fun getReadableMessage(error: Throwable): String {
         return when (error) {
-            is FirebaseAuthInvalidUserException -> "Bu e-posta ile kayitli kullanici bulunamadi."
-            is FirebaseAuthInvalidCredentialsException -> "E-posta veya sifre hatali."
-            is FirebaseAuthRecentLoginRequiredException -> "Bu islem icin sifrenle tekrar dogrulama gerekiyor."
-            is FirebaseAuthUserCollisionException -> "Bu e-posta adresi zaten kullaniliyor."
-            is FirebaseAuthWeakPasswordException -> "Sifre en az 6 karakter olmali."
-            is FirebaseNetworkException -> "Ag baglantisi kontrol edilmeli."
-            is IllegalStateException -> error.localizedMessage ?: "Oturum bilgisi bulunamadi."
-            else -> error.localizedMessage ?: "Islem tamamlanamadi."
+            is FirebaseAuthInvalidUserException -> "Bu e-posta ile kayıtlı kullanıcı bulunamadı."
+            is FirebaseAuthInvalidCredentialsException -> "E-posta veya şifre hatalı."
+            is FirebaseAuthRecentLoginRequiredException -> "Bu işlem için şifrenle tekrar doğrulama gerekiyor."
+            is FirebaseAuthUserCollisionException -> "Bu e-posta adresi zaten kullanılıyor."
+            is FirebaseAuthWeakPasswordException -> "Şifre en az 6 karakter olmalı."
+            is FirebaseNetworkException -> "Ağ bağlantısı kontrol edilmeli."
+            is IllegalStateException -> error.localizedMessage ?: "Oturum bilgisi bulunamadı."
+            else -> error.localizedMessage ?: "İşlem tamamlanamadı."
         }
     }
 }

@@ -9,8 +9,8 @@ object SupportedFlowers {
     val items = listOf(
         SupportedFlower(displayName = "Papatya", scientificName = "Bellis perennis"),
         SupportedFlower(displayName = "Karahindiba", scientificName = "Taraxacum officinale"),
-        SupportedFlower(displayName = "Gul", scientificName = "Rosa spp."),
-        SupportedFlower(displayName = "Aycicegi", scientificName = "Helianthus annuus"),
+        SupportedFlower(displayName = "Gül", scientificName = "Rosa spp."),
+        SupportedFlower(displayName = "Ayçiçeği", scientificName = "Helianthus annuus"),
         SupportedFlower(displayName = "Lale", scientificName = "Tulipa spp.")
     )
 }

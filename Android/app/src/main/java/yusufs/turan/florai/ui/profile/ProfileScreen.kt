@@ -155,8 +155,8 @@ fun ProfileScreen(
     if (showSaveDialog) {
         AlertDialog(
             onDismissRequest = { showSaveDialog = false },
-            title = { Text("Degisiklikleri kaydet") },
-            text = { Text("Degisiklikleri kaydetmek istiyor musunuz?") },
+            title = { Text("Değişiklikleri kaydet") },
+            text = { Text("Değişiklikleri kaydetmek istiyor musunuz?") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -173,7 +173,7 @@ fun ProfileScreen(
                     onClick = { showSaveDialog = false },
                     enabled = !uiState.isSaving
                 ) {
-                    Text("Vazgec")
+                    Text("Vazgeç")
                 }
             }
         )
@@ -186,11 +186,11 @@ fun ProfileScreen(
                     showDeleteDialog = false
                 }
             },
-            title = { Text("Hesabi sil") },
+            title = { Text("Hesabı sil") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
-                        text = "Bu islem profil bilgilerini, tahmin gecmisini ve kaydedilen gorselleri siler. Devam etmek icin sifreni gir."
+                        text = "Bu işlem profil bilgilerini, tahmin geçmişini ve kaydedilen görselleri siler. Devam etmek için şifreni gir."
                     )
                     OutlinedTextField(
                         value = deletePassword,
@@ -198,7 +198,7 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !uiState.isDeletingAccount,
                         singleLine = true,
-                        label = { Text("Sifre") },
+                        label = { Text("Şifre") },
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Password
@@ -218,7 +218,7 @@ fun ProfileScreen(
                         )
                     } else {
                         Text(
-                            text = "Hesabi sil",
+                            text = "Hesabı sil",
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -229,7 +229,7 @@ fun ProfileScreen(
                     onClick = { showDeleteDialog = false },
                     enabled = !uiState.isDeletingAccount
                 ) {
-                    Text("Vazgec")
+                    Text("Vazgeç")
                 }
             }
         )
@@ -273,14 +273,14 @@ private fun ProfileContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Kullanici Bilgileri",
+                        text = "Kullanıcı Bilgileri",
                         style = MaterialTheme.typography.titleLarge
                     )
                     if (!isEditing) {
                         IconButton(onClick = onEdit) {
                             Icon(
                                 imageVector = Icons.Filled.Edit,
-                                contentDescription = "Duzenle"
+                                contentDescription = "Düzenle"
                             )
                         }
                     }
@@ -293,7 +293,7 @@ private fun ProfileContent(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !isSaving,
                         singleLine = true,
-                        label = { Text("Kullanici ismi") },
+                        label = { Text("Kullanıcı ismi") },
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Words
                         )
@@ -307,7 +307,7 @@ private fun ProfileContent(
                             modifier = Modifier.weight(1f),
                             enabled = !isSaving
                         ) {
-                            Text("Vazgec")
+                            Text("Vazgeç")
                         }
                         Button(
                             onClick = onRequestSave,
@@ -327,20 +327,20 @@ private fun ProfileContent(
                     }
                 } else {
                     ProfileRow(
-                        label = "Kullanici ismi",
+                        label = "Kullanıcı ismi",
                         value = profile.displayName ?: "Belirtilmedi"
                     )
                 }
 
                 ProfileRow(label = "E-posta", value = profile.email ?: "Belirtilmedi")
-                ProfileRow(label = "Kullanici ID", value = profile.uid)
+                ProfileRow(label = "Kullanıcı ID", value = profile.uid)
                 ProfileRow(label = "Rol", value = profile.role)
                 ProfileRow(
                     label = "Toplam tahmin",
                     value = profile.predictionCount.toString()
                 )
-                ProfileRow(label = "Olusturulma", value = profile.createdAt.toDisplayDate())
-                ProfileRow(label = "Guncellenme", value = profile.updatedAt.toDisplayDate())
+                ProfileRow(label = "Oluşturulma", value = profile.createdAt.toDisplayDate())
+                ProfileRow(label = "Güncellenme", value = profile.updatedAt.toDisplayDate())
                 ProfileRow(label = "Son etkinlik", value = profile.lastActiveAt.toDisplayDate())
             }
         }
@@ -359,7 +359,7 @@ private fun ProfileContent(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text("Hesabi sil")
+                Text("Hesabı sil")
             }
         }
     }
@@ -391,7 +391,7 @@ private fun EmptyProfile(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Profil bilgileri alinamadi",
+            text = "Profil bilgileri alınamadı",
             style = MaterialTheme.typography.titleLarge
         )
         Button(onClick = onRefresh) {

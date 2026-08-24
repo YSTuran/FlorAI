@@ -85,7 +85,7 @@ class ProfileViewModel @Inject constructor(
 
     fun deleteAccount(password: String) {
         if (password.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Hesabi silmek icin sifreni girmelisin.") }
+            _uiState.update { it.copy(errorMessage = "Hesabı silmek için şifreni girmelisin.") }
             return
         }
 
@@ -141,10 +141,10 @@ class ProfileViewModel @Inject constructor(
 
     private fun validateDisplayName(displayName: String): String? {
         if (displayName.length < 2) {
-            return "Kullanici ismi en az 2 karakter olmali."
+            return "Kullanıcı ismi en az 2 karakter olmalı."
         }
         if (displayName.length > 40) {
-            return "Kullanici ismi en fazla 40 karakter olmali."
+            return "Kullanıcı ismi en fazla 40 karakter olmalı."
         }
         return null
     }
