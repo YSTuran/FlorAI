@@ -7,8 +7,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import yusufs.turan.florai.core.network.HttpErrorParser
-import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
 import yusufs.turan.florai.data.prediction.remote.PredictionApi
+import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
+import yusufs.turan.florai.domain.prediction.PredictionHistoryPage
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import java.net.ConnectException
@@ -16,7 +17,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.io.IOException
 
-private const val DEFAULT_HISTORY_LIMIT = 50
+private const val DEFAULT_HISTORY_LIMIT = 20
 
 class PredictionRepository(
     private val api: PredictionApi
@@ -37,11 +38,12 @@ class PredictionRepository(
     }
 
     suspend fun getPredictionHistory(
-        limit: Int = DEFAULT_HISTORY_LIMIT
-    ): Result<List<PredictionHistoryItem>> {
+        limit: Int = DEFAULT_HISTORY_LIMIT,
+        cursor: String? = null
+    ): Result<PredictionHistoryPage> {
         return withContext(Dispatchers.IO) {
             runCatching {
-                api.getPredictionHistory(limit).toDomain()
+                api.getPredictionHistory(limit, cursor).toDomain()
             }
         }
     }

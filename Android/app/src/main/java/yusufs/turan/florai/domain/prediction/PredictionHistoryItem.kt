@@ -13,6 +13,11 @@ data class PredictionHistoryItem(
     val createdAt: String?
 )
 
+data class PredictionHistoryPage(
+    val items: List<PredictionHistoryItem>,
+    val nextCursor: String?
+)
+
 data class PredictionScore(
     val classId: Int,
     val modelLabel: String,

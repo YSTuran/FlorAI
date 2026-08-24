@@ -13,10 +13,15 @@ router = APIRouter()
 @router.get("/prediction-history", response_model=PredictionHistoryResponse)
 async def list_prediction_history(
     limit: int = Query(default=MAX_HISTORY_ITEMS, ge=1, le=MAX_HISTORY_ITEMS),
+    cursor: str | None = Query(default=None, min_length=1),
     current_user: CurrentUser = Depends(get_current_user),
     history_service: PredictionHistoryService = Depends(get_prediction_history_service),
 ) -> PredictionHistoryResponse:
-    return history_service.list_history(user=current_user, limit=limit)
+    return history_service.list_history(
+        user=current_user,
+        limit=limit,
+        cursor=cursor,
+    )
 
 
 @router.get("/prediction-history/{prediction_id}", response_model=PredictionHistoryItem)

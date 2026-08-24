@@ -120,8 +120,11 @@ created history document ID when Firestore is enabled.
 The history endpoint supports a bounded limit:
 
 ```text
-GET /prediction-history?limit=50
+GET /prediction-history?limit=20
+GET /prediction-history?limit=20&cursor=<nextCursor>
 ```
+
+The response includes `nextCursor` when another page is available.
 
 Use the detail endpoint to fetch a single authenticated user's history item:
 

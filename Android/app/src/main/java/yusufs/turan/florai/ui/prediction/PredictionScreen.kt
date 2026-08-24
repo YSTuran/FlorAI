@@ -3,10 +3,10 @@ package yusufs.turan.florai.ui.prediction
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -77,7 +77,12 @@ import yusufs.turan.florai.domain.flower.SupportedFlowers
 import yusufs.turan.florai.domain.prediction.PredictionResult
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import yusufs.turan.florai.ui.common.BackNavigationIcon
+import java.io.ByteArrayOutputStream
 import java.io.File
+import kotlin.math.roundToInt
+
+private const val MAX_UPLOAD_IMAGE_SIDE_PX = 1280
+private const val JPEG_UPLOAD_QUALITY = 85
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,18 +107,15 @@ fun PredictionScreen(
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         coroutineScope.launch {
-            val selectedImage = withContext(Dispatchers.IO) {
-                context.readSelectedImage(uri)
-            }
-            val bitmap = withContext(Dispatchers.IO) {
-                context.decodePreviewBitmap(uri)
+            val preparedImage = withContext(Dispatchers.IO) {
+                context.prepareSelectedImage(uri)
             }
 
-            if (selectedImage == null || bitmap == null) {
+            if (preparedImage == null) {
                 onImageError("Görsel okunamadı.")
             } else {
-                previewBitmap = bitmap
-                onImageSelected(selectedImage)
+                previewBitmap = preparedImage.previewBitmap
+                onImageSelected(preparedImage.selectedImage)
             }
         }
     }
@@ -150,18 +152,15 @@ fun PredictionScreen(
             onBack = { showCamera = false },
             onCaptured = { imageFile ->
                 coroutineScope.launch {
-                    val selectedImage = withContext(Dispatchers.IO) {
-                        context.readCapturedImage(imageFile)
-                    }
-                    val bitmap = withContext(Dispatchers.IO) {
-                        context.decodePreviewBitmap(imageFile)
+                    val preparedImage = withContext(Dispatchers.IO) {
+                        context.prepareCapturedImage(imageFile)
                     }
 
-                    if (selectedImage == null || bitmap == null) {
+                    if (preparedImage == null) {
                         onImageError("Kamera görseli okunamadı.")
                     } else {
-                        previewBitmap = bitmap
-                        onImageSelected(selectedImage)
+                        previewBitmap = preparedImage.previewBitmap
+                        onImageSelected(preparedImage.selectedImage)
                     }
                     showCamera = false
                 }
@@ -672,39 +671,81 @@ private fun InfoChips(label: String, values: List<String>) {
     }
 }
 
-private fun Context.readSelectedImage(uri: Uri): SelectedImage? {
-    val resolver = contentResolver
-    val mimeType = resolver.getType(uri) ?: "image/jpeg"
-    val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: "jpg"
-    val fileName = resolver.getDisplayName(uri) ?: "flower-image.$extension"
-    val bytes = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return null
+private data class PreparedImage(
+    val selectedImage: SelectedImage,
+    val previewBitmap: ImageBitmap
+)
 
-    return SelectedImage(
-        fileName = fileName,
-        mimeType = mimeType,
-        bytes = bytes
+private fun Context.prepareSelectedImage(uri: Uri): PreparedImage? {
+    val bitmap = decodeUploadBitmap(
+        ImageDecoder.createSource(contentResolver, uri)
+    ) ?: return null
+    val bytes = bitmap.toJpegBytes() ?: return null
+    val fileName = contentResolver.getDisplayName(uri)
+        ?.toJpegFileName()
+        ?: "flower-image.jpg"
+
+    return PreparedImage(
+        selectedImage = SelectedImage(
+            fileName = fileName,
+            mimeType = "image/jpeg",
+            bytes = bytes
+        ),
+        previewBitmap = bitmap.asImageBitmap()
     )
 }
 
-private fun Context.readCapturedImage(file: File): SelectedImage? {
-    val bytes = file.takeIf { it.exists() }?.readBytes() ?: return null
-    return SelectedImage(
-        fileName = file.name,
-        mimeType = "image/jpeg",
-        bytes = bytes
+private fun Context.prepareCapturedImage(file: File): PreparedImage? {
+    if (!file.exists()) return null
+
+    val bitmap = decodeUploadBitmap(
+        ImageDecoder.createSource(file)
+    ) ?: return null
+    val bytes = bitmap.toJpegBytes() ?: return null
+
+    return PreparedImage(
+        selectedImage = SelectedImage(
+            fileName = file.name.toJpegFileName(),
+            mimeType = "image/jpeg",
+            bytes = bytes
+        ),
+        previewBitmap = bitmap.asImageBitmap()
     )
 }
 
-private fun Context.decodePreviewBitmap(uri: Uri): ImageBitmap? {
+private fun decodeUploadBitmap(source: ImageDecoder.Source): Bitmap? {
     return runCatching {
-        ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)).asImageBitmap()
+        ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            val width = info.size.width
+            val height = info.size.height
+            val longestSide = maxOf(width, height)
+            if (longestSide > MAX_UPLOAD_IMAGE_SIDE_PX) {
+                val scale = MAX_UPLOAD_IMAGE_SIDE_PX.toFloat() / longestSide.toFloat()
+                decoder.setTargetSize(
+                    maxOf(1, (width * scale).roundToInt()),
+                    maxOf(1, (height * scale).roundToInt())
+                )
+            }
+        }
     }.getOrNull()
 }
 
-private fun Context.decodePreviewBitmap(file: File): ImageBitmap? {
-    return runCatching {
-        ImageDecoder.decodeBitmap(ImageDecoder.createSource(file)).asImageBitmap()
-    }.getOrNull()
+private fun Bitmap.toJpegBytes(): ByteArray? {
+    val output = ByteArrayOutputStream()
+    return if (compress(Bitmap.CompressFormat.JPEG, JPEG_UPLOAD_QUALITY, output)) {
+        output.toByteArray()
+    } else {
+        null
+    }
+}
+
+private fun String.toJpegFileName(): String {
+    val baseName = substringBeforeLast(
+        delimiter = ".",
+        missingDelimiterValue = this
+    ).ifBlank { "flower-image" }
+    return "$baseName.jpg"
 }
 
 private fun android.content.ContentResolver.getDisplayName(uri: Uri): String? {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,6 +47,7 @@ fun PredictionHistoryScreen(
     onBack: () -> Unit,
     onOpenDetails: (PredictionHistoryItem) -> Unit,
     onRefresh: () -> Unit,
+    onLoadMore: () -> Unit,
     onDeleteItem: (String) -> Unit,
     onDeleteAll: () -> Unit,
     onErrorShown: () -> Unit,
@@ -128,6 +130,16 @@ fun PredictionHistoryScreen(
                                 onDelete = { itemPendingDelete = item }
                             )
                         }
+
+                        if (uiState.nextCursor != null) {
+                            item {
+                                LoadMoreHistoryButton(
+                                    isLoadingMore = uiState.isLoadingMore,
+                                    enabled = uiState.canLoadMore,
+                                    onLoadMore = onLoadMore
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -178,6 +190,34 @@ fun PredictionHistoryScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun LoadMoreHistoryButton(
+    isLoadingMore: Boolean,
+    enabled: Boolean,
+    onLoadMore: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onLoadMore,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = enabled
+    ) {
+        if (isLoadingMore) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp
+                )
+                Text("Yükleniyor")
+            }
+        } else {
+            Text("Daha fazla yükle")
+        }
     }
 }
 

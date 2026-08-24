@@ -58,6 +58,7 @@ class PredictionHistoryItem(BaseModel):
 
 class PredictionHistoryResponse(BaseModel):
     items: list[PredictionHistoryItem]
+    nextCursor: str | None = None
 
 
 class UserProfile(BaseModel):

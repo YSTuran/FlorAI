@@ -79,6 +79,7 @@ fun FlorAIApp(
         onPredictionErrorShown = predictionViewModel::clearError,
         onImageError = predictionViewModel::showError,
         onRefreshHistory = predictionHistoryViewModel::loadHistory,
+        onLoadMoreHistory = predictionHistoryViewModel::loadMore,
         onDeleteHistoryItem = predictionHistoryViewModel::deleteItem,
         onDeleteHistory = predictionHistoryViewModel::deleteAll,
         onHistoryErrorShown = predictionHistoryViewModel::clearError,

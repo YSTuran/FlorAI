@@ -11,8 +11,8 @@ service firebase.storage {
     }
 
     match /prediction-images/{userId}/{imageFile} {
-      allow read: if isOwner(userId);
-      allow write: if false;
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if false;
     }
 
     match /{allPaths=**} {

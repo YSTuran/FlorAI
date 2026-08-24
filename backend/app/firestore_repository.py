@@ -68,7 +68,7 @@ class FirestoreRepository:
         user: CurrentUser,
         limit: int = MAX_HISTORY_ITEMS,
     ) -> list[dict]:
-        return self.history.list(user=user, limit=limit)
+        return self.history.list(user=user, limit=limit)["items"]
 
     def get_prediction_history_item(
         self,

@@ -19,10 +19,16 @@ class PredictionHistoryService:
         *,
         user: CurrentUser,
         limit: int,
+        cursor: str | None,
     ) -> PredictionHistoryResponse:
-        items = self._history_repository.list(user=user, limit=limit)
+        page = self._history_repository.list(
+            user=user,
+            limit=limit,
+            cursor=cursor,
+        )
         return PredictionHistoryResponse(
-            items=[PredictionHistoryItem(**item) for item in items]
+            items=[PredictionHistoryItem(**item) for item in page["items"]],
+            nextCursor=page["nextCursor"],
         )
 
     def get_history_item(

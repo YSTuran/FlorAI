@@ -1,13 +1,18 @@
 package yusufs.turan.florai.data.prediction.remote
 
 import yusufs.turan.florai.domain.prediction.PredictionHistoryItem
+import yusufs.turan.florai.domain.prediction.PredictionHistoryPage
 import yusufs.turan.florai.domain.prediction.PredictionScore
 
 data class PredictionHistoryResponseDto(
-    val items: List<PredictionHistoryItemDto>
+    val items: List<PredictionHistoryItemDto>,
+    val nextCursor: String?
 ) {
-    fun toDomain(): List<PredictionHistoryItem> {
-        return items.map { it.toDomain() }
+    fun toDomain(): PredictionHistoryPage {
+        return PredictionHistoryPage(
+            items = items.map { it.toDomain() },
+            nextCursor = nextCursor?.takeIf { it.isNotBlank() }
+        )
     }
 }
 

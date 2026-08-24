@@ -51,6 +51,7 @@ fun FlorAINavGraph(
     onPredictionErrorShown: () -> Unit,
     onImageError: (String) -> Unit,
     onRefreshHistory: () -> Unit,
+    onLoadMoreHistory: () -> Unit,
     onDeleteHistoryItem: (String) -> Unit,
     onDeleteHistory: () -> Unit,
     onHistoryErrorShown: () -> Unit,
@@ -98,6 +99,7 @@ fun FlorAINavGraph(
                     navController.navigate(AppRoute.HistoryDetail.createRoute(it.id))
                 },
                 onRefresh = onRefreshHistory,
+                onLoadMore = onLoadMoreHistory,
                 onDeleteItem = onDeleteHistoryItem,
                 onDeleteAll = onDeleteHistory,
                 onErrorShown = onHistoryErrorShown

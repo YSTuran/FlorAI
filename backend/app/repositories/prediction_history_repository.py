@@ -74,9 +74,10 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
         self,
         user: CurrentUser,
         limit: int = MAX_HISTORY_ITEMS,
-    ) -> list[dict]:
+        cursor: str | None = None,
+    ) -> dict:
         if not self.is_enabled:
-            return []
+            return {"items": [], "nextCursor": None}
 
         from firebase_admin import firestore
         from google.api_core.exceptions import FailedPrecondition
@@ -84,22 +85,60 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
 
         try:
             bounded_limit = max(1, min(limit, MAX_HISTORY_ITEMS))
-            query = self._client().collection("predictionHistory").where(
+            client = self._client()
+            collection = client.collection("predictionHistory")
+            query = collection.where(
                 filter=FieldFilter("userId", "==", user.uid)
             )
             try:
+                paged_query = query.order_by(
+                    "createdAt",
+                    direction=firestore.Query.DESCENDING,
+                )
+                if cursor:
+                    cursor_doc = collection.document(cursor).get()
+                    self._ensure_owned_doc(cursor_doc, user, action="view")
+                    paged_query = paged_query.start_after(cursor_doc)
+
                 docs = list(
-                    query.order_by(
-                        "createdAt",
-                        direction=firestore.Query.DESCENDING,
-                    )
-                    .limit(bounded_limit)
-                    .stream()
+                    paged_query.limit(bounded_limit + 1).stream()
+                )
+                page_docs = docs[:bounded_limit]
+                history_items = [_history_payload_from_doc(doc) for doc in page_docs]
+                next_cursor = (
+                    page_docs[-1].id
+                    if len(docs) > bounded_limit and page_docs
+                    else None
                 )
             except FailedPrecondition:
                 docs = list(query.stream())
+                history_items = sorted(
+                    [_history_payload_from_doc(doc) for doc in docs],
+                    key=lambda item: item.get("createdAt") or "",
+                    reverse=True,
+                )
+                if cursor:
+                    cursor_index = next(
+                        (
+                            index
+                            for index, item in enumerate(history_items)
+                            if item["id"] == cursor
+                        ),
+                        None,
+                    )
+                    if cursor_index is None:
+                        raise HTTPException(
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Prediction history item was not found.",
+                        )
+                    history_items = history_items[cursor_index + 1:]
 
-            history_items = [_history_payload_from_doc(doc) for doc in docs]
+                next_cursor = (
+                    history_items[bounded_limit - 1]["id"]
+                    if len(history_items) > bounded_limit
+                    else None
+                )
+                history_items = history_items[:bounded_limit]
         except HTTPException:
             raise
         except Exception as exc:
@@ -108,11 +147,10 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                 detail="Prediction history is not available.",
             ) from exc
 
-        return sorted(
-            history_items,
-            key=lambda item: item.get("createdAt") or "",
-            reverse=True,
-        )[:bounded_limit]
+        return {
+            "items": history_items,
+            "nextCursor": next_cursor,
+        }
 
     def get(self, user: CurrentUser, prediction_id: str) -> dict:
         if not self.is_enabled:

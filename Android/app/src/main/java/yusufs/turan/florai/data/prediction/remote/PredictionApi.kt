@@ -18,7 +18,8 @@ interface PredictionApi {
 
     @GET("prediction-history")
     suspend fun getPredictionHistory(
-        @Query("limit") limit: Int
+        @Query("limit") limit: Int,
+        @Query("cursor") cursor: String?
     ): PredictionHistoryResponseDto
 
     @GET("prediction-history/{predictionId}")

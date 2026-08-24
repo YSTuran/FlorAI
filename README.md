@@ -113,8 +113,11 @@ kaydina yazar.
 Tahmin gecmisi endpointi:
 
 ```text
-GET /prediction-history?limit=50
+GET /prediction-history?limit=20
+GET /prediction-history?limit=20&cursor=<nextCursor>
 ```
+
+Yanitta `items` ile birlikte sonraki sayfa varsa `nextCursor` doner.
 
 Tekil tahmin gecmisi detayi:
 

@@ -14,36 +14,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isCreatingOwnHistory() {
-      return isSignedIn()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-          'userId',
-          'userEmail',
-          'predictedFlowerId',
-          'displayName',
-          'modelLabel',
-          'classId',
-          'confidence',
-          'lowConfidence',
-          'imageUrl',
-          'topPredictions',
-          'source',
-          'createdAt'
-        ])
-        && request.resource.data.keys().hasAll([
-          'userId',
-          'predictedFlowerId',
-          'displayName',
-          'modelLabel',
-          'classId',
-          'confidence',
-          'lowConfidence',
-          'source',
-          'createdAt'
-        ]);
-    }
-
     match /flowers/{flowerId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if false;
@@ -51,40 +21,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isProfileOwner(userId);
-      allow list: if false;
-
-      allow create: if isProfileOwner(userId)
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.role == 'user'
-        && request.resource.data.predictionCount == 0
-        && request.resource.data.keys().hasOnly([
-          'uid',
-          'email',
-          'displayName',
-          'role',
-          'predictionCount',
-          'createdAt',
-          'updatedAt',
-          'lastActiveAt'
-        ]);
-
-      allow update: if isProfileOwner(userId)
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.predictionCount == resource.data.predictionCount
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.diff(resource.data).changedKeys()
-          .hasOnly(['displayName', 'updatedAt']);
-
-      allow delete: if false;
+      allow list, create, update, delete: if false;
     }
 
     match /predictionHistory/{predictionId} {
       allow get, list: if isHistoryOwner();
-      allow create: if isCreatingOwnHistory();
-      allow update: if false;
-      allow delete: if isHistoryOwner();
+      allow create, update, delete: if false;
     }
 
     match /{document=**} {
