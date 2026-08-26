@@ -1,7 +1,4 @@
 from pathlib import Path
-from urllib.parse import quote
-from uuid import uuid4
-
 from fastapi import HTTPException, status
 
 from .auth import CurrentUser
@@ -52,19 +49,13 @@ class StorageService:
             bucket = get_storage_bucket()
             extension = _resolve_extension(content_type, filename)
             object_path = f"prediction-images/{user.uid}/{prediction_id}.{extension}"
-            token = str(uuid4())
             blob = bucket.blob(object_path)
-            blob.metadata = {"firebaseStorageDownloadTokens": token}
             blob.upload_from_string(
                 image_bytes,
                 content_type=content_type or "image/jpeg",
             )
 
-            encoded_path = quote(blob.name, safe="")
-            return (
-                f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/"
-                f"{encoded_path}?alt=media&token={token}"
-            )
+            return object_path
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

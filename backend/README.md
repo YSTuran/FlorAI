@@ -12,6 +12,18 @@ mobile app flow.
 - `sunflowers` -> Aycicegi
 - `tulips` -> Lale
 
+## Flower Catalog Endpoint
+
+The mobile app can fetch the supported flower catalog from the backend:
+
+```text
+GET /flowers
+```
+
+When Firestore is enabled, the backend reads `flowers/{flowerId}` documents. If a
+document is missing, the local catalog matching the trained model classes is used
+as a fallback.
+
 ## Local Run
 
 ```powershell
@@ -105,12 +117,15 @@ Stored fields include:
   "classId": 0,
   "confidence": 0.91,
   "lowConfidence": false,
-  "imageUrl": "https://firebasestorage.googleapis.com/...",
+  "imagePath": "prediction-images/firebase_user_uid/prediction_id.jpg",
   "topPredictions": [],
   "source": "mobile",
   "createdAt": "server_timestamp"
 }
 ```
+
+`users/{uid}.predictionCount` represents the current number of prediction history
+records. Deleting one or all history records updates this value.
 
 The response `predictionId` is `null` while Firestore is disabled. It contains the
 created history document ID when Firestore is enabled.
@@ -151,8 +166,10 @@ under:
 prediction-images/{uid}/{predictionId}.{extension}
 ```
 
-The generated download URL is written to `predictionHistory.imageUrl`. Deleting a
-history item also attempts to remove its Storage image.
+The Storage object path is written to `predictionHistory.imagePath`. The mobile
+app resolves that path through Firebase Storage SDK and loads the image with
+Coil. Older `predictionHistory.imageUrl` values are still supported for backward
+compatibility. Deleting a history item also attempts to remove its Storage image.
 
 ## Render Start Command
 

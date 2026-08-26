@@ -1,11 +1,10 @@
 package yusufs.turan.florai.ui.history
 
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,61 +16,92 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.net.URL
+import coil.compose.SubcomposeAsyncImage
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun PredictionHistoryImage(
+    imagePath: String?,
     imageUrl: String?,
     modifier: Modifier = Modifier,
-    emptyText: String = "Görsel URL'si bekleniyor"
+    emptyText: String = "Görsel bekleniyor"
 ) {
-    var bitmap by remember(imageUrl) { mutableStateOf<ImageBitmap?>(null) }
-    var didFail by remember(imageUrl) { mutableStateOf(false) }
+    var resolvedImageUrl by remember(imagePath, imageUrl) { mutableStateOf<String?>(null) }
+    var didFail by remember(imagePath, imageUrl) { mutableStateOf(false) }
+    val containerModifier = modifier
+        .clip(RoundedCornerShape(8.dp))
+        .background(MaterialTheme.colorScheme.surfaceVariant)
 
-    LaunchedEffect(imageUrl) {
-        bitmap = null
+    LaunchedEffect(imagePath, imageUrl) {
+        resolvedImageUrl = null
         didFail = false
 
-        val url = imageUrl?.takeIf { it.isNotBlank() } ?: return@LaunchedEffect
-        bitmap = withContext(Dispatchers.IO) {
-            runCatching {
-                URL(url).openConnection().apply {
-                    connectTimeout = 10_000
-                    readTimeout = 10_000
-                }.getInputStream().use { stream ->
-                    BitmapFactory.decodeStream(stream)?.asImageBitmap()
-                }
-            }.getOrNull()
+        val storagePath = imagePath?.takeIf { it.isNotBlank() }
+        if (storagePath != null) {
+            resolvedImageUrl = runCatching {
+                FirebaseStorage.getInstance()
+                    .reference
+                    .child(storagePath)
+                    .downloadUrl
+                    .await()
+                    .toString()
+            }.getOrElse {
+                didFail = true
+                null
+            }
+            return@LaunchedEffect
         }
-        didFail = bitmap == null
+
+        resolvedImageUrl = imageUrl?.takeIf { it.isNotBlank() }
     }
 
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
-    ) {
-        val loadedBitmap = bitmap
-        if (loadedBitmap != null) {
-            Image(
-                bitmap = loadedBitmap,
-                contentDescription = null,
+    val url = resolvedImageUrl
+    if (url == null) {
+        ImageStateBox(
+            text = if (didFail) "Görsel yüklenemedi" else emptyText,
+            modifier = containerModifier
+        )
+        return
+    }
+
+    SubcomposeAsyncImage(
+        model = url,
+        contentDescription = null,
+        modifier = containerModifier,
+        contentScale = ContentScale.Crop,
+        loading = {
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Text(
-                text = if (didFail) "Görsel yüklenemedi" else emptyText,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        },
+        error = {
+            ImageStateBox(
+                text = "Görsel yüklenemedi",
+                modifier = Modifier.fillMaxSize()
             )
         }
+    )
+}
+
+@Composable
+private fun ImageStateBox(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }

@@ -1,5 +1,6 @@
 from ..auth import CurrentUser
 from ..repositories.prediction_history_repository import PredictionHistoryRepository
+from ..repositories.user_repository import UserRepository
 from ..schemas import DeleteResponse, PredictionHistoryItem, PredictionHistoryResponse
 from ..storage_service import StorageService
 
@@ -9,9 +10,11 @@ class PredictionHistoryService:
         self,
         *,
         history_repository: PredictionHistoryRepository,
+        user_repository: UserRepository,
         storage_service: StorageService,
     ) -> None:
         self._history_repository = history_repository
+        self._user_repository = user_repository
         self._storage_service = storage_service
 
     def list_history(
@@ -58,10 +61,18 @@ class PredictionHistoryService:
                 user=user,
                 prediction_id=prediction_id,
             )
+            self._user_repository.set_prediction_count(
+                user=user,
+                prediction_count=self._history_repository.count(user),
+            )
         return DeleteResponse(deletedCount=deleted_count)
 
     def delete_history(self, user: CurrentUser) -> DeleteResponse:
         deleted_count = self._history_repository.delete_all(user)
         if deleted_count:
             self._storage_service.delete_user_prediction_images(user=user)
+            self._user_repository.set_prediction_count(
+                user=user,
+                prediction_count=0,
+            )
         return DeleteResponse(deletedCount=deleted_count)

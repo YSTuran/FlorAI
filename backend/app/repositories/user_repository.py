@@ -150,6 +150,28 @@ class UserRepository(FirestoreRepositoryBase):
         except Exception:
             return
 
+    def set_prediction_count(self, user: CurrentUser, prediction_count: int) -> None:
+        if not self.is_enabled:
+            return
+
+        client = self._client()
+        from firebase_admin import firestore
+
+        doc_ref = client.collection("users").document(user.uid)
+        try:
+            doc_ref.set(
+                {
+                    "uid": user.uid,
+                    "email": user.email,
+                    "predictionCount": max(0, prediction_count),
+                    "updatedAt": firestore.SERVER_TIMESTAMP,
+                    "lastActiveAt": firestore.SERVER_TIMESTAMP,
+                },
+                merge=True,
+            )
+        except Exception:
+            return
+
     def delete_profile(self, user: CurrentUser) -> int:
         if not self.is_enabled:
             return 0

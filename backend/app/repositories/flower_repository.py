@@ -1,4 +1,5 @@
 from ..schemas import FlowerInfo
+from ..flower_catalog import FLOWERS
 from .common import FirestoreRepositoryBase
 
 
@@ -23,3 +24,9 @@ class FlowerRepository(FirestoreRepositoryBase):
         flower = FlowerInfo(**data)
         self._flower_cache[flower_id] = flower
         return flower
+
+    def list_flowers(self) -> list[FlowerInfo]:
+        flowers: list[FlowerInfo] = []
+        for flower_id, fallback_flower in FLOWERS.items():
+            flowers.append(self.get_flower(flower_id) or fallback_flower)
+        return flowers

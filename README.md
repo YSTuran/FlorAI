@@ -13,6 +13,7 @@ Auth, Firestore, Storage servisleriyle entegre olur.
 - CameraX ile uygulama icinden fotograf cekme
 - Photo Picker ile galeriden gorsel secme
 - Backend uzerinden cicek tahmini alma
+- Desteklenen cicek listesini backend uzerinden alma
 - Tahmin gecmisini Firestore uzerinden listeleme
 - Tahmin gorsellerini Firebase Storage'da saklama
 - Tek tahmin veya tum gecmisi silme
@@ -29,6 +30,8 @@ Mobil:
 - Retrofit
 - Coroutines
 - Firebase Auth
+- Firebase Storage SDK
+- Coil
 
 Backend:
 
@@ -105,8 +108,25 @@ prediction-images/{uid}/{predictionId}.jpg
 ```
 
 Mobil uygulama Storage'a dogrudan yazmaz. Fotograf backend'e gider, backend
-Firebase Admin SDK ile Storage'a yukler ve olusan URL'i Firestore history
-kaydina yazar.
+Firebase Admin SDK ile Storage'a yukler ve Firestore history kaydina Storage
+nesne yolunu `imagePath` olarak yazar. Mobil uygulama bu yolu Firebase Storage
+SDK ile yetkili sekilde okuyup gorseli Coil ile yukler. Eski kayitlarda
+bulunabilecek `imageUrl` alani yalnizca geriye donuk uyumluluk icin kullanilir.
+
+`users/{uid}.predictionCount` alani toplam tahmin sayisindan ziyade kullanicinin
+mevcut tahmin gecmisi kaydi sayisini temsil eder. Gecmis kaydi silindikce bu
+deger backend tarafinda senkron tutulur.
+
+## Cicek Listesi
+
+Mobil uygulama desteklenen cicek listesini backend'den alir:
+
+```text
+GET /flowers
+```
+
+Backend, Firestore'daki `flowers/{flowerId}` dokumanlarini kullanir. Eksik
+dokuman olursa egitim siniflariyla uyumlu yerel katalog yedek olarak kullanilir.
 
 ## History Sorgusu
 

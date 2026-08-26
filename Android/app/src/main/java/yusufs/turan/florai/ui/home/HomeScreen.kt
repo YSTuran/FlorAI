@@ -39,11 +39,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import yusufs.turan.florai.data.auth.AuthUser
-import yusufs.turan.florai.domain.flower.SupportedFlowers
+import yusufs.turan.florai.domain.flower.SupportedFlower
 
 @Composable
 fun HomeScreen(
     user: AuthUser,
+    supportedFlowers: List<SupportedFlower>,
     onOpenPrediction: () -> Unit,
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -91,7 +92,7 @@ fun HomeScreen(
                 )
             }
 
-            SupportedFlowersPanel()
+            SupportedFlowersPanel(flowers = supportedFlowers)
 
             AccountPanel(user = user)
         }
@@ -267,7 +268,7 @@ private fun HomeNavigationCard(
 }
 
 @Composable
-private fun SupportedFlowersPanel() {
+private fun SupportedFlowersPanel(flowers: List<SupportedFlower>) {
     val chipScrollState = rememberScrollState()
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -282,7 +283,7 @@ private fun SupportedFlowersPanel() {
                 .horizontalScroll(chipScrollState),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            SupportedFlowers.items.forEach { flower ->
+            flowers.forEach { flower ->
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,

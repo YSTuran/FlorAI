@@ -13,6 +13,9 @@ def _history_payload_from_doc(doc) -> dict:
     image_url = data.get("imageUrl")
     if not isinstance(image_url, str) or not image_url.strip():
         image_url = None
+    image_path = data.get("imagePath")
+    if not isinstance(image_path, str) or not image_path.strip():
+        image_path = None
 
     return {
         "id": doc.id,
@@ -22,6 +25,7 @@ def _history_payload_from_doc(doc) -> dict:
         "classId": int(data.get("classId") or 0),
         "confidence": float(data.get("confidence") or 0),
         "lowConfidence": bool(data.get("lowConfidence") or False),
+        "imagePath": image_path,
         "imageUrl": image_url,
         "topPredictions": data.get("topPredictions") or [],
         "createdAt": created_at,
@@ -42,7 +46,7 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
         top_predictions: list[PredictionItem],
         low_confidence: bool,
         prediction_id: str | None = None,
-        image_url: str | None = None,
+        image_path: str | None = None,
     ) -> str | None:
         if not self.is_enabled:
             return None
@@ -60,7 +64,8 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                 "classId": best_prediction.classId,
                 "confidence": best_prediction.confidence,
                 "lowConfidence": low_confidence,
-                "imageUrl": image_url or "",
+                "imagePath": image_path or "",
+                "imageUrl": "",
                 "topPredictions": [
                     model_to_dict(prediction) for prediction in top_predictions
                 ],
@@ -225,6 +230,23 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
             ) from exc
 
         return deleted_count
+
+    def count(self, user: CurrentUser) -> int:
+        if not self.is_enabled:
+            return 0
+
+        from google.cloud.firestore_v1.base_query import FieldFilter
+
+        try:
+            docs = self._client().collection("predictionHistory").where(
+                filter=FieldFilter("userId", "==", user.uid)
+            ).stream()
+            return sum(1 for _ in docs)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Prediction history is not available.",
+            ) from exc
 
     def update_image_url(
         self,

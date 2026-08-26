@@ -24,6 +24,7 @@ data class PredictionHistoryItemDto(
     val classId: Int,
     val confidence: Float,
     val lowConfidence: Boolean,
+    val imagePath: String?,
     val imageUrl: String?,
     val topPredictions: List<PredictionScoreDto>?,
     val createdAt: String?
@@ -37,6 +38,7 @@ data class PredictionHistoryItemDto(
             classId = classId,
             confidence = confidence,
             lowConfidence = lowConfidence,
+            imagePath = imagePath?.takeIf { it.isNotBlank() },
             imageUrl = imageUrl?.takeIf { it.isNotBlank() },
             topPredictions = topPredictions.orEmpty().map { it.toDomain() },
             createdAt = createdAt

@@ -29,6 +29,7 @@ async def root(
         storageEnabled=bool(settings.firebase_storage_bucket),
         endpoints={
             "health": "GET /health",
+            "flowers": "GET /flowers",
             "predict": "POST /predict",
             "currentUser": "GET /users/me",
             "updateCurrentUser": "PUT /users/me",

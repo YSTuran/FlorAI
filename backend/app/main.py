@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .api import history, predictions, root, users
+from .api import flowers, history, predictions, root, users
 from .config import get_settings
 from .model_service import FlowerClassifier
 from .repositories.flower_repository import FlowerRepository
@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=get_settings().app_name, version="0.1.0", lifespan=lifespan)
 
 app.include_router(root.router)
+app.include_router(flowers.router)
 app.include_router(predictions.router)
 app.include_router(users.router)
 app.include_router(history.router)

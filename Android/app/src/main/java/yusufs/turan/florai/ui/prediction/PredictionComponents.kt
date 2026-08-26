@@ -15,11 +15,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.FilterVintage
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -33,7 +40,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import yusufs.turan.florai.domain.flower.SupportedFlower
-import yusufs.turan.florai.domain.flower.SupportedFlowers
 import yusufs.turan.florai.domain.prediction.PredictionResult
 
 @Composable
@@ -106,6 +112,12 @@ internal fun ImagePickerCard(
                     modifier = Modifier.weight(1f),
                     enabled = !isPredicting
                 ) {
+                    Icon(
+                        imageVector = Icons.Filled.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
                     Text("Kamera")
                 }
                 OutlinedButton(
@@ -113,6 +125,12 @@ internal fun ImagePickerCard(
                     modifier = Modifier.weight(1f),
                     enabled = !isPredicting
                 ) {
+                    Icon(
+                        imageVector = Icons.Filled.Image,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
                     Text("Galeri")
                 }
             }
@@ -122,6 +140,12 @@ internal fun ImagePickerCard(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = selectedImageName != null && !isPredicting
             ) {
+                Icon(
+                    imageVector = Icons.Filled.DeleteOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
                 Text("Temizle")
             }
 
@@ -130,6 +154,12 @@ internal fun ImagePickerCard(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isPredicting
             ) {
+                Icon(
+                    imageVector = Icons.Filled.FilterVintage,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
                 Text("Desteklenen çiçekleri gör")
             }
 
@@ -155,6 +185,12 @@ internal fun ImagePickerCard(
                 } else if (hasResult) {
                     Text("Tahmin tamamlandı")
                 } else {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(10.dp))
                     Text("Tahmin et")
                 }
             }
@@ -163,13 +199,16 @@ internal fun ImagePickerCard(
 }
 
 @Composable
-internal fun SupportedFlowersDialog(onDismiss: () -> Unit) {
+internal fun SupportedFlowersDialog(
+    flowers: List<SupportedFlower>,
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Desteklenen çiçekler") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SupportedFlowers.items.forEach { flower ->
+                flowers.forEach { flower ->
                     SupportedFlowerRow(flower = flower)
                 }
             }

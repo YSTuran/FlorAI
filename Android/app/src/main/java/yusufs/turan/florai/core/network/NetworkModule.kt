@@ -11,6 +11,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import yusufs.turan.florai.BuildConfig
 import yusufs.turan.florai.data.auth.FirebaseAuthRepository
+import yusufs.turan.florai.data.flower.FlowerRepository
+import yusufs.turan.florai.data.flower.remote.FlowerApi
 import yusufs.turan.florai.data.prediction.PredictionRepository
 import yusufs.turan.florai.data.prediction.remote.PredictionApi
 import yusufs.turan.florai.data.user.UserRepository
@@ -85,6 +87,12 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideFlowerApi(retrofit: Retrofit): FlowerApi {
+        return retrofit.create(FlowerApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun providePredictionRepository(api: PredictionApi): PredictionRepository {
         return PredictionRepository(api = api)
     }
@@ -93,5 +101,11 @@ object NetworkModule {
     @Singleton
     fun provideUserRepository(api: UserApi): UserRepository {
         return UserRepository(api = api)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFlowerRepository(api: FlowerApi): FlowerRepository {
+        return FlowerRepository(api = api)
     }
 }

@@ -51,6 +51,7 @@ class PredictionHistoryItem(BaseModel):
     classId: int
     confidence: float
     lowConfidence: bool
+    imagePath: str | None = None
     imageUrl: str | None = None
     topPredictions: list[PredictionItem] = Field(default_factory=list)
     createdAt: str | None = None

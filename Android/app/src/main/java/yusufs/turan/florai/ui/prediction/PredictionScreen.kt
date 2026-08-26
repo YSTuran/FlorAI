@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import yusufs.turan.florai.domain.flower.SupportedFlower
 import yusufs.turan.florai.domain.prediction.SelectedImage
 import yusufs.turan.florai.ui.common.BackNavigationIcon
 
@@ -42,6 +43,7 @@ import yusufs.turan.florai.ui.common.BackNavigationIcon
 @Composable
 fun PredictionScreen(
     predictionUiState: PredictionUiState,
+    supportedFlowers: List<SupportedFlower>,
     onImageSelected: (SelectedImage) -> Unit,
     onPredict: () -> Unit,
     onClearImage: () -> Unit,
@@ -187,6 +189,7 @@ fun PredictionScreen(
 
     if (showSupportedFlowersDialog) {
         SupportedFlowersDialog(
+            flowers = supportedFlowers,
             onDismiss = { showSupportedFlowersDialog = false }
         )
     }

@@ -61,7 +61,7 @@ class PredictionService:
 
         low_confidence = best_prediction.confidence < settings.confidence_threshold
         prediction_id = self._history_repository.create_id()
-        image_url = self._storage_service.upload_prediction_image(
+        image_path = self._storage_service.upload_prediction_image(
             user=user,
             prediction_id=prediction_id,
             image_bytes=image_bytes,
@@ -76,7 +76,7 @@ class PredictionService:
                 top_predictions=predictions,
                 low_confidence=low_confidence,
                 prediction_id=prediction_id,
-                image_url=image_url,
+                image_path=image_path,
             )
         except HTTPException:
             if prediction_id is not None:

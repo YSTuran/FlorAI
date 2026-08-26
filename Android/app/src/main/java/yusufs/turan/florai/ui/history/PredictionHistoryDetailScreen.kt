@@ -64,6 +64,7 @@ fun PredictionHistoryDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             PredictionHistoryImage(
+                imagePath = item.imagePath,
                 imageUrl = item.imageUrl,
                 modifier = Modifier
                     .fillMaxWidth()

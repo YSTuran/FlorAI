@@ -164,8 +164,11 @@ class ProfileViewModel @Inject constructor(
                 it.copy(
                     profile = if (deleteResult.isSuccess) null else it.profile,
                     isDeletingAccount = false,
-                    errorMessage = deleteResult.exceptionOrNull()
-                        ?.let(authRepository::getReadableMessage),
+                    errorMessage = deleteResult.exceptionOrNull()?.let { error ->
+                        "Kullanıcı verileri temizlendi ancak hesap silinemedi: " +
+                            authRepository.getReadableMessage(error) +
+                            " Tekrar deneyebilirsin."
+                    },
                     successMessage = if (deleteResult.isSuccess) {
                         "Hesap silindi."
                     } else {

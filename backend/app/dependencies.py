@@ -66,9 +66,11 @@ def get_prediction_history_service(
     history_repository: PredictionHistoryRepository = Depends(
         get_prediction_history_repository
     ),
+    user_repository: UserRepository = Depends(get_user_repository),
     storage_service: StorageService = Depends(get_storage_service),
 ) -> PredictionHistoryService:
     return PredictionHistoryService(
         history_repository=history_repository,
+        user_repository=user_repository,
         storage_service=storage_service,
     )

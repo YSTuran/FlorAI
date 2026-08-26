@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -70,6 +74,7 @@ internal fun HistoryItemCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             PredictionHistoryImage(
+                imagePath = item.imagePath,
                 imageUrl = item.imageUrl,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,19 +114,36 @@ internal fun HistoryItemCard(
                 )
             }
 
-            Button(
-                onClick = onOpenDetails,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Detayları göster")
-            }
+                Button(
+                    onClick = onOpenDetails,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Visibility,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                    Text("Detay")
+                }
 
-            OutlinedButton(
-                onClick = onDelete,
-                enabled = !isDeleting,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Tahmini sil")
+                OutlinedButton(
+                    onClick = onDelete,
+                    enabled = !isDeleting,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DeleteOutline,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(8.dp))
+                    Text("Sil")
+                }
             }
         }
     }
