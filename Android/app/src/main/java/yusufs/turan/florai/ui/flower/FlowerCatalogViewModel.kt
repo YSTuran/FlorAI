@@ -54,4 +54,8 @@ class FlowerCatalogViewModel @Inject constructor(
         didLoad = false
         _uiState.value = FlowerCatalogUiState()
     }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
 }

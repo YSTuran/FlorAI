@@ -1,22 +1,22 @@
 # FlorAI
 
-FlorAI, kullanicinin kameradan cektigi veya galeriden sectigi cicek fotografini
-siniflandiran mobil + backend tabanli bir uygulamadir. Backend FastAPI ile
-calisir, egitilmis Ultralytics YOLO classification modelini kullanir ve Firebase
+FlorAI, kullanıcının kameradan çektiği veya galeriden seçtiği çiçek fotoğrafını
+sınıflandıran mobil + backend tabanlı bir uygulamadır. Backend FastAPI ile
+çalışır, eğitilmiş Ultralytics YOLO classification modelini kullanır ve Firebase
 Auth, Firestore, Storage servisleriyle entegre olur.
 
-## Ozellikler
+## Özellikler
 
-- Firebase Authentication ile kayit, giris, cikis
-- E-posta dogrulamasi ve sifremi unuttum akisi
-- Dogrulama tamamlandiktan sonra `users/{uid}` profil dokumani olusturma
-- CameraX ile uygulama icinden fotograf cekme
-- Photo Picker ile galeriden gorsel secme
-- Backend uzerinden cicek tahmini alma
-- Desteklenen cicek listesini backend uzerinden alma
-- Tahmin gecmisini Firestore uzerinden listeleme
-- Tahmin gorsellerini Firebase Storage'da saklama
-- Tek tahmin veya tum gecmisi silme
+- Firebase Authentication ile kayıt, giriş, çıkış
+- E-posta doğrulaması ve şifremi unuttum akışı
+- Doğrulama tamamlandıktan sonra `users/{uid}` profil dokümanı oluşturma
+- CameraX ile uygulama içinden fotoğraf çekme
+- Photo Picker ile galeriden görsel seçme
+- Backend üzerinden çiçek tahmini alma
+- Desteklenen çiçek listesini backend üzerinden alma
+- Tahmin geçmişini Firestore üzerinden listeleme
+- Tahmin görsellerini Firebase Storage'da saklama
+- Tek tahmin veya tüm geçmişi silme
 
 ## Teknolojiler
 
@@ -42,23 +42,23 @@ Backend:
 - Firestore
 - Firebase Storage
 
-Dagitim:
+Dağıtım:
 
 - Render Python Web Service
 - Otomatik HTTPS
 
-## Proje Yapisi
+## Proje Yapısı
 
 ```text
 FlorAI/
   Android/          Android mobil uygulama
   backend/          FastAPI backend
-  firestore.rules   Firestore guvenlik kurallari
-  storage.rules     Firebase Storage guvenlik kurallari
-  firebase.json     Firebase rules deploy ayarlari
+  firestore.rules   Firestore güvenlik kuralları
+  storage.rules     Firebase Storage güvenlik kuralları
+  firebase.json     Firebase rules deploy ayarları
 ```
 
-## Backend Calistirma
+## Backend Çalıştırma
 
 ```powershell
 cd backend
@@ -74,7 +74,7 @@ Temel kontrol:
 GET http://127.0.0.1:8000/health
 ```
 
-## Backend Ortam Degiskenleri
+## Backend Ortam Değişkenleri
 
 ```text
 APP_NAME=FlorAI Backend
@@ -89,17 +89,17 @@ FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
 FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase-admin.json
 ```
 
-Render tarafinda `FIREBASE_SERVICE_ACCOUNT_PATH` genelde secret file ile
-`/etc/secrets/firebase-admin.json` olarak tanimlanir. Firebase Admin SDK dosyasi
+Render tarafında `FIREBASE_SERVICE_ACCOUNT_PATH` genelde secret file ile
+`/etc/secrets/firebase-admin.json` olarak tanımlanır. Firebase Admin SDK dosyası
 repo'ya eklenmemelidir.
 
-## Firebase Yapisi
+## Firebase Yapısı
 
-Firestore koleksiyonlari:
+Firestore koleksiyonları:
 
-- `flowers/{flowerId}`: Cicek bilgi dokumanlari
-- `users/{uid}`: Kullanici profil dokumani
-- `predictionHistory/{predictionId}`: Kullanici tahmin gecmisi
+- `flowers/{flowerId}`: Çiçek bilgi dokümanları
+- `users/{uid}`: Kullanıcı profil dokümanı
+- `predictionHistory/{predictionId}`: Kullanıcı tahmin geçmişi
 
 Storage path yapisi:
 
@@ -107,26 +107,26 @@ Storage path yapisi:
 prediction-images/{uid}/{predictionId}.jpg
 ```
 
-Mobil uygulama Storage'a dogrudan yazmaz. Fotograf backend'e gider, backend
-Firebase Admin SDK ile Storage'a yukler ve Firestore history kaydina Storage
+Mobil uygulama Storage'a doğrudan yazmaz. Fotoğraf backend'e gider, backend
+Firebase Admin SDK ile Storage'a yükler ve Firestore history kaydına Storage
 nesne yolunu `imagePath` olarak yazar. Mobil uygulama bu yolu Firebase Storage
-SDK ile yetkili sekilde okuyup gorseli Coil ile yukler. Eski kayitlarda
-bulunabilecek `imageUrl` alani yalnizca geriye donuk uyumluluk icin kullanilir.
+SDK ile yetkili şekilde okuyup görseli Coil ile yükler. Eski kayıtlarda
+bulunabilecek `imageUrl` alanı yalnızca geriye dönük uyumluluk için kullanılır.
 
-`users/{uid}.predictionCount` alani toplam tahmin sayisindan ziyade kullanicinin
-mevcut tahmin gecmisi kaydi sayisini temsil eder. Gecmis kaydi silindikce bu
-deger backend tarafinda senkron tutulur.
+`users/{uid}.predictionCount` alanı toplam tahmin sayısından ziyade kullanıcının
+mevcut tahmin geçmişi kaydı sayısını temsil eder. Geçmiş kaydı silindikçe bu
+değer backend tarafında senkron tutulur.
 
-## Cicek Listesi
+## Çiçek Listesi
 
-Mobil uygulama desteklenen cicek listesini backend'den alir:
+Mobil uygulama desteklenen çiçek listesini backend'den alır:
 
 ```text
 GET /flowers
 ```
 
-Backend, Firestore'daki `flowers/{flowerId}` dokumanlarini kullanir. Eksik
-dokuman olursa egitim siniflariyla uyumlu yerel katalog yedek olarak kullanilir.
+Backend, Firestore'daki `flowers/{flowerId}` dokümanlarını kullanır. Eksik
+doküman olursa eğitim sınıflarıyla uyumlu yerel katalog yedek olarak kullanılır.
 
 ## History Sorgusu
 
@@ -137,7 +137,7 @@ GET /prediction-history?limit=20
 GET /prediction-history?limit=20&cursor=<nextCursor>
 ```
 
-Yanitta `items` ile birlikte sonraki sayfa varsa `nextCursor` doner.
+Yanıtta `items` ile birlikte sonraki sayfa varsa `nextCursor` döner.
 
 Tekil tahmin gecmisi detayi:
 
@@ -145,8 +145,8 @@ Tekil tahmin gecmisi detayi:
 GET /prediction-history/{prediction_id}
 ```
 
-Backend, kayitlari `userId` filtresi ve `createdAt DESC` siralamasi ile almaya
-calisir. En iyi performans icin Firestore'da su composite index onerilir:
+Backend, kayıtları `userId` filtresi ve `createdAt DESC` sıralaması ile almaya
+çalışır. En iyi performans için Firestore'da şu composite index önerilir:
 
 ```text
 Collection: predictionHistory
@@ -155,8 +155,8 @@ Fields:
   createdAt Descending
 ```
 
-Index henuz hazir degilse backend kucuk olcekli fallback ile kayitlari alip
-uygulama tarafinda siralar.
+Index henüz hazır değilse backend küçük ölçekli fallback ile kayıtları alıp
+uygulama tarafında sıralar.
 
 ## Firebase Rules Deploy
 
@@ -164,7 +164,7 @@ uygulama tarafinda siralar.
 firebase deploy --only firestore,storage
 ```
 
-## Android Calistirma
+## Android Çalıştırma
 
 Local backend ile:
 
@@ -180,7 +180,23 @@ cd Android
 .\gradlew.bat :app:assembleRenderDebug
 ```
 
-Build flavor API adresleri `Android/app/build.gradle.kts` icinde tutulur.
+Build flavor API adresleri `Android/app/build.gradle.kts` içinde tutulur.
+
+## Testler
+
+Backend unit testleri:
+
+```powershell
+cd backend
+python -m unittest discover -s tests
+```
+
+Android unit testleri:
+
+```powershell
+cd Android
+.\gradlew.bat :app:testLocalDebugUnitTest
+```
 
 ## Render
 
@@ -192,7 +208,7 @@ Build Command: pip install -r requirements.txt
 Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-Deploy sonrasi kontrol:
+Deploy sonrası kontrol:
 
 ```text
 GET https://florai-jd3v.onrender.com/health

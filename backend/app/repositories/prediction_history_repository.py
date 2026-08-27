@@ -1,8 +1,13 @@
+import logging
+
 from fastapi import HTTPException, status
 
 from ..auth import CurrentUser
 from ..schemas import PredictionItem
 from .common import FirestoreRepositoryBase, MAX_HISTORY_ITEMS, model_to_dict
+
+
+logger = logging.getLogger(__name__)
 
 
 def _history_payload_from_doc(doc) -> dict:
@@ -116,6 +121,12 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                     else None
                 )
             except FailedPrecondition:
+                logger.warning(
+                    "Prediction history composite index is missing. "
+                    "Using in-memory fallback. uid=%s",
+                    user.uid,
+                    exc_info=True,
+                )
                 docs = list(query.stream())
                 history_items = sorted(
                     [_history_payload_from_doc(doc) for doc in docs],
@@ -269,6 +280,12 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
 
             doc_ref.set({"imageUrl": image_url}, merge=True)
         except Exception:
+            logger.warning(
+                "Prediction history imageUrl could not be updated. uid=%s prediction_id=%s",
+                user.uid,
+                prediction_id,
+                exc_info=True,
+            )
             return
 
     def _ensure_owned_doc(self, doc, user: CurrentUser, action: str) -> None:

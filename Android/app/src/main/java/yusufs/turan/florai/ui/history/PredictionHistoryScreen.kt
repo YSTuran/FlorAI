@@ -34,7 +34,7 @@ import yusufs.turan.florai.ui.common.BackNavigationIcon
 @Composable
 fun PredictionHistoryScreen(
     uiState: PredictionHistoryUiState,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onOpenDetails: (PredictionHistoryItem) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
@@ -82,7 +82,11 @@ fun PredictionHistoryScreen(
                         }
                     }
                 },
-                navigationIcon = { BackNavigationIcon(onBack = onBack) },
+                navigationIcon = {
+                    if (onBack != null) {
+                        BackNavigationIcon(onBack = onBack)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )

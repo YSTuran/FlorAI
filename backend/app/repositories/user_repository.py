@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import HTTPException, status
 
 from ..auth import CurrentUser
@@ -7,6 +9,9 @@ from .common import (
     clean_display_name,
     timestamp_to_iso,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserRepository(FirestoreRepositoryBase):
@@ -148,6 +153,11 @@ class UserRepository(FirestoreRepositoryBase):
                 merge=True,
             )
         except Exception:
+            logger.warning(
+                "Prediction count could not be incremented. uid=%s",
+                user.uid,
+                exc_info=True,
+            )
             return
 
     def set_prediction_count(self, user: CurrentUser, prediction_count: int) -> None:
@@ -170,6 +180,12 @@ class UserRepository(FirestoreRepositoryBase):
                 merge=True,
             )
         except Exception:
+            logger.warning(
+                "Prediction count could not be synchronized. uid=%s count=%s",
+                user.uid,
+                prediction_count,
+                exc_info=True,
+            )
             return
 
     def delete_profile(self, user: CurrentUser) -> int:

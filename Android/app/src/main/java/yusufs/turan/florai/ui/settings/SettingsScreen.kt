@@ -35,7 +35,7 @@ import yusufs.turan.florai.ui.common.BackNavigationIcon
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onOpenProfile: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
@@ -45,7 +45,11 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Ayarlar") },
-                navigationIcon = { BackNavigationIcon(onBack = onBack) },
+                navigationIcon = {
+                    if (onBack != null) {
+                        BackNavigationIcon(onBack = onBack)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )

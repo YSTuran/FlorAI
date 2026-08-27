@@ -16,16 +16,16 @@ FLOWERS = {
         commonName="Papatya",
         scientificName="Bellis perennis",
         height="10-20 cm",
-        habitats=["Cayirlar", "yol kenarlari", "bahceler", "acik ve gunesli alanlar"],
-        bloomMonths=["Mart", "Nisan", "Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim"],
+        habitats=["Çayırlar", "yol kenarları", "bahçeler", "açık ve güneşli alanlar"],
+        bloomMonths=["Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim"],
         details=(
-            "Papatya, iliman iklimlerde yaygin gorulen, beyaz tac yapraklari ve sari "
-            "orta kismi ile kolay taninan bir cicektir. Bahce ve dogal alanlarda sik "
-            "karsilasilir."
+            "Papatya, ılıman iklimlerde yaygın görülen, beyaz taç yaprakları ve sarı "
+            "orta kısmı ile kolay tanınan bir çiçektir. Bahçe ve doğal alanlarda sık "
+            "karşılaşılır."
         ),
         extraFacts=[
-            "Gunesli veya yari golgeli alanlarda iyi gelisir.",
-            "Benzer gorunumlu farkli papatya turleri bulunabilir.",
+            "Güneşli veya yarı gölgeli alanlarda iyi gelişir.",
+            "Benzer görünümlü farklı papatya türleri bulunabilir.",
         ],
     ),
     "karahindiba": FlowerInfo(
@@ -33,50 +33,50 @@ FLOWERS = {
         commonName="Karahindiba",
         scientificName="Taraxacum officinale",
         height="5-40 cm",
-        habitats=["Cayirlar", "tarla kenarlari", "yol kenarlari", "park ve cim alanlari"],
-        bloomMonths=["Mart", "Nisan", "Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim", "Kasim"],
+        habitats=["Çayırlar", "tarla kenarları", "yol kenarları", "park ve çim alanları"],
+        bloomMonths=["Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım"],
         details=(
-            "Karahindiba parlak sari cicekleri ve daha sonra olusan tuylu tohum basi ile "
-            "bilinir. Dayanikli yapisi sayesinde sehir icinde ve dogal alanlarda yaygin "
-            "olarak gorulebilir."
+            "Karahindiba parlak sarı çiçekleri ve daha sonra oluşan tüylü tohum başı ile "
+            "bilinir. Dayanıklı yapısı sayesinde şehir içinde ve doğal alanlarda yaygın "
+            "olarak görülebilir."
         ),
         extraFacts=[
-            "Tohumlari ruzgarla kolayca yayilir.",
-            "Genellikle dusuk bakimli ve direncli bir bitkidir.",
+            "Tohumları rüzgarla kolayca yayılır.",
+            "Genellikle düşük bakımlı ve dirençli bir bitkidir.",
         ],
     ),
     "gul": FlowerInfo(
         id="gul",
-        commonName="Gul",
+        commonName="Gül",
         scientificName="Rosa spp.",
         height="30-200 cm",
-        habitats=["Bahceler", "parklar", "sus bitkisi alanlari", "iliman bolgeler"],
-        bloomMonths=["Mayis", "Haziran", "Temmuz", "Agustos", "Eylul", "Ekim"],
+        habitats=["Bahçeler", "parklar", "süs bitkisi alanları", "ılıman bölgeler"],
+        bloomMonths=["Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim"],
         details=(
-            "Gul, cok sayida tur ve kulture sahip, kokusu ve gosterisli cicekleriyle "
-            "taninan bir sus bitkisidir. Renk, boy ve diken yapisi ture gore degisiklik "
-            "gosterebilir."
+            "Gül, çok sayıda tür ve kültüre sahip, kokusu ve gösterişli çiçekleriyle "
+            "tanınan bir süs bitkisidir. Renk, boy ve diken yapısı türe göre değişiklik "
+            "gösterebilir."
         ),
         extraFacts=[
-            "Duzenli budama ciceklenmeyi destekleyebilir.",
-            "Tam gunes alan konumlarda daha verimli gelisir.",
+            "Düzenli budama çiçeklenmeyi destekleyebilir.",
+            "Tam güneş alan konumlarda daha verimli gelişir.",
         ],
     ),
     "aycicegi": FlowerInfo(
         id="aycicegi",
-        commonName="Aycicegi",
+        commonName="Ayçiçeği",
         scientificName="Helianthus annuus",
         height="100-300 cm",
-        habitats=["Tarim alanlari", "gunesli bahceler", "acik araziler"],
-        bloomMonths=["Temmuz", "Agustos", "Eylul"],
+        habitats=["Tarım alanları", "güneşli bahçeler", "açık araziler"],
+        bloomMonths=["Temmuz", "Ağustos", "Eylül"],
         details=(
-            "Aycicegi buyuk sari cicek tablasi ve uzun govdesiyle bilinen tek yillik "
-            "bir bitkidir. Gunesli alanlari sever ve tarimsal uretimde de onemli bir "
+            "Ayçiçeği büyük sarı çiçek tablası ve uzun gövdesiyle bilinen tek yıllık "
+            "bir bitkidir. Güneşli alanları sever ve tarımsal üretimde de önemli bir "
             "yere sahiptir."
         ),
         extraFacts=[
-            "Genclik doneminde gunes yonelimli hareket gosterebilir.",
-            "Tohumlari gida ve yag uretiminde kullanilir.",
+            "Gençlik döneminde güneş yönelimli hareket gösterebilir.",
+            "Tohumları gıda ve yağ üretiminde kullanılır.",
         ],
     ),
     "lale": FlowerInfo(
@@ -84,16 +84,16 @@ FLOWERS = {
         commonName="Lale",
         scientificName="Tulipa spp.",
         height="10-70 cm",
-        habitats=["Bahceler", "parklar", "step alanlari", "kayalik yamaclar"],
-        bloomMonths=["Mart", "Nisan", "Mayis"],
+        habitats=["Bahçeler", "parklar", "step alanları", "kayalık yamaçlar"],
+        bloomMonths=["Mart", "Nisan", "Mayıs"],
         details=(
-            "Lale, soganli yapisi ve canli renkli cicekleriyle taninan ilkbahar "
-            "bitkisidir. Sus bitkisi olarak yaygin yetistirilir ve farkli renklerde "
-            "cok sayida kulture sahiptir."
+            "Lale, soğanlı yapısı ve canlı renkli çiçekleriyle tanınan ilkbahar "
+            "bitkisidir. Süs bitkisi olarak yaygın yetiştirilir ve farklı renklerde "
+            "çok sayıda kültüre sahiptir."
         ),
         extraFacts=[
-            "Dikim genellikle sonbaharda yapilir.",
-            "Ciceklenme suresi iklim ve ture gore degisebilir.",
+            "Dikim genellikle sonbaharda yapılır.",
+            "Çiçeklenme süresi iklim ve türe göre değişebilir.",
         ],
     ),
 }

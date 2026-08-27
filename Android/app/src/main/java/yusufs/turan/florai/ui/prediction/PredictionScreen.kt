@@ -49,7 +49,7 @@ fun PredictionScreen(
     onClearImage: () -> Unit,
     onPredictionErrorShown: () -> Unit,
     onImageError: (String) -> Unit,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -146,7 +146,11 @@ fun PredictionScreen(
                         )
                     }
                 },
-                navigationIcon = { BackNavigationIcon(onBack = onBack) },
+                navigationIcon = {
+                    if (onBack != null) {
+                        BackNavigationIcon(onBack = onBack)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 )

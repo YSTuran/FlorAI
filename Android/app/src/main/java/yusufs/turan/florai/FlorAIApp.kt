@@ -97,6 +97,7 @@ fun FlorAIApp(
         onDeleteAccount = profileViewModel::deleteAccount,
         onProfileMessagesShown = profileViewModel::clearMessages,
         onProfileSaved = authViewModel::refreshCurrentUser,
+        onFlowerCatalogErrorShown = flowerCatalogViewModel::clearError,
         onSignOut = { signOutAndResetSession() }
     )
 }

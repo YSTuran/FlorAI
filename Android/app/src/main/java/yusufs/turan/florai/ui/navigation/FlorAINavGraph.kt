@@ -17,11 +17,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -85,6 +88,7 @@ fun FlorAINavGraph(
     onDeleteAccount: (String) -> Unit,
     onProfileMessagesShown: () -> Unit,
     onProfileSaved: () -> Unit,
+    onFlowerCatalogErrorShown: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController()
@@ -92,22 +96,32 @@ fun FlorAINavGraph(
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = bottomNavItems.any { it.route.route == currentRoute }
+    val appSnackbarHostState = remember { SnackbarHostState() }
+
+    fun navigateToTopLevel(route: AppRoute) {
+        navController.navigate(route.route) {
+            popUpTo(AppRoute.Home.route) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    LaunchedEffect(flowerCatalogUiState.errorMessage) {
+        val message = flowerCatalogUiState.errorMessage ?: return@LaunchedEffect
+        appSnackbarHostState.showSnackbar(message)
+        onFlowerCatalogErrorShown()
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(appSnackbarHostState) },
         bottomBar = {
             if (showBottomBar) {
                 FlorAIBottomNavigation(
                     currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        navController.navigate(route.route) {
-                            popUpTo(AppRoute.Home.route) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    onNavigate = ::navigateToTopLevel
                 )
             }
         }
@@ -121,9 +135,9 @@ fun FlorAINavGraph(
                 HomeScreen(
                     user = currentUser,
                     supportedFlowers = flowerCatalogUiState.items,
-                    onOpenPrediction = { navController.navigate(AppRoute.Prediction.route) },
-                    onOpenHistory = { navController.navigate(AppRoute.History.route) },
-                    onOpenSettings = { navController.navigate(AppRoute.Settings.route) }
+                    onOpenPrediction = { navigateToTopLevel(AppRoute.Prediction) },
+                    onOpenHistory = { navigateToTopLevel(AppRoute.History) },
+                    onOpenSettings = { navigateToTopLevel(AppRoute.Settings) }
                 )
             }
 
@@ -135,15 +149,13 @@ fun FlorAINavGraph(
                     onPredict = onPredict,
                     onClearImage = onClearImage,
                     onPredictionErrorShown = onPredictionErrorShown,
-                    onImageError = onImageError,
-                    onBack = navController::navigateUp
+                    onImageError = onImageError
                 )
             }
 
             composable(AppRoute.History.route) {
                 PredictionHistoryScreen(
                     uiState = predictionHistoryUiState,
-                    onBack = navController::navigateUp,
                     onOpenDetails = {
                         navController.navigate(AppRoute.HistoryDetail.createRoute(it.id))
                     },
@@ -200,15 +212,9 @@ fun FlorAINavGraph(
 
             composable(AppRoute.Settings.route) {
                 SettingsScreen(
-                    onBack = navController::navigateUp,
                     onOpenProfile = { navController.navigate(AppRoute.Profile.route) },
                     onSignOut = {
-                        navController.navigate(AppRoute.Home.route) {
-                            popUpTo(AppRoute.Home.route) {
-                                inclusive = false
-                            }
-                            launchSingleTop = true
-                        }
+                        navigateToTopLevel(AppRoute.Home)
                         onSignOut()
                     }
                 )

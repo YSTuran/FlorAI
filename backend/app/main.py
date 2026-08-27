@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,6 +12,9 @@ from .repositories.user_repository import UserRepository
 from .storage_service import StorageService
 
 
+logger = logging.getLogger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -18,7 +22,12 @@ async def lifespan(app: FastAPI):
         model_path=settings.model_path,
         confidence_threshold=settings.confidence_threshold,
     )
+    logger.info("Loading flower classifier from %s", settings.model_path)
     classifier.load()
+    logger.info(
+        "Flower classifier loaded with %s classes",
+        len(classifier.names),
+    )
 
     app.state.classifier = classifier
     app.state.flower_repository = FlowerRepository()

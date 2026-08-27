@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from fastapi import HTTPException, status
 
@@ -14,6 +15,9 @@ CONTENT_TYPE_TO_EXTENSION = {
     "image/heic": "heic",
     "image/heif": "heif",
 }
+
+
+logger = logging.getLogger(__name__)
 
 
 def _resolve_extension(content_type: str | None, filename: str | None) -> str:
@@ -72,6 +76,12 @@ class StorageService:
             for blob in bucket.list_blobs(prefix=prefix):
                 blob.delete()
         except Exception:
+            logger.warning(
+                "Prediction image could not be deleted. uid=%s prediction_id=%s",
+                user.uid,
+                prediction_id,
+                exc_info=True,
+            )
             return
 
     def delete_user_prediction_images(self, *, user: CurrentUser) -> None:
@@ -84,4 +94,9 @@ class StorageService:
             for blob in bucket.list_blobs(prefix=prefix):
                 blob.delete()
         except Exception:
+            logger.warning(
+                "User prediction images could not be deleted. uid=%s",
+                user.uid,
+                exc_info=True,
+            )
             return

@@ -8,8 +8,8 @@ mobile app flow.
 
 - `daisy` -> Papatya
 - `dandelion` -> Karahindiba
-- `roses` -> Gul
-- `sunflowers` -> Aycicegi
+- `roses` -> Gül
+- `sunflowers` -> Ayçiçeği
 - `tulips` -> Lale
 
 ## Flower Catalog Endpoint
@@ -46,18 +46,18 @@ Example predict response:
   "status": "success",
   "predictionId": null,
   "result": {
-    "flowerId": "papatya",
-    "classId": 0,
-    "modelLabel": "daisy",
-    "name": "Papatya",
-    "scientificName": "Bellis perennis",
-    "confidence": 0.91,
-    "lowConfidence": false,
-    "height": "10-20 cm",
-    "habitats": ["Cayirlar", "yol kenarlari"],
-    "bloomMonths": ["Mart", "Nisan", "Mayis"],
-    "details": "Papatya, iliman iklimlerde yaygin gorulen bir cicektir.",
-    "extraFacts": ["Gunesli veya yari golgeli alanlarda iyi gelisir."]
+            "flowerId": "papatya",
+            "classId": 0,
+            "modelLabel": "daisy",
+            "name": "Papatya",
+            "scientificName": "Bellis perennis",
+            "confidence": 0.91,
+            "lowConfidence": false,
+            "height": "10-20 cm",
+            "habitats": ["Çayırlar", "yol kenarları"],
+            "bloomMonths": ["Mart", "Nisan", "Mayıs"],
+            "details": "Papatya, ılıman iklimlerde yaygın görülen bir çiçektir.",
+            "extraFacts": ["Güneşli veya yarı gölgeli alanlarda iyi gelişir."]
   }
 }
 ```
@@ -155,6 +155,13 @@ Collection: predictionHistory
 Fields:
   userId Ascending
   createdAt Descending
+```
+
+## Tests
+
+```powershell
+cd backend
+python -m unittest discover -s tests
 ```
 
 ## Firebase Storage
