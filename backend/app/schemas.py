@@ -30,6 +30,8 @@ class PredictionResult(BaseModel):
     scientificName: str | None = None
     confidence: float
     lowConfidence: bool
+    confidenceGap: float | None = None
+    confidenceNote: str | None = None
     height: str | None = None
     habitats: list[str] = Field(default_factory=list)
     bloomMonths: list[str] = Field(default_factory=list)
@@ -51,6 +53,8 @@ class PredictionHistoryItem(BaseModel):
     classId: int
     confidence: float
     lowConfidence: bool
+    confidenceGap: float | None = None
+    confidenceNote: str | None = None
     imagePath: str | None = None
     imageUrl: str | None = None
     topPredictions: list[PredictionItem] = Field(default_factory=list)
@@ -87,6 +91,7 @@ class UserProfileUpdate(BaseModel):
 
 class DeleteResponse(BaseModel):
     deletedCount: int
+    authDeleted: bool = False
 
 
 class AppInfoResponse(BaseModel):

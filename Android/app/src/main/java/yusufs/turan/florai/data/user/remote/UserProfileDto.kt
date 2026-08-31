@@ -1,5 +1,6 @@
 package yusufs.turan.florai.data.user.remote
 
+import yusufs.turan.florai.domain.user.AccountDeletionResult
 import yusufs.turan.florai.domain.user.UserProfile
 
 data class UserProfileDto(
@@ -31,5 +32,13 @@ data class UpdateUserProfileRequestDto(
 )
 
 data class DeleteUserDataResponseDto(
-    val deletedCount: Int
-)
+    val deletedCount: Int,
+    val authDeleted: Boolean?
+) {
+    fun toDomain(): AccountDeletionResult {
+        return AccountDeletionResult(
+            deletedCount = deletedCount,
+            authDeleted = authDeleted ?: false
+        )
+    }
+}

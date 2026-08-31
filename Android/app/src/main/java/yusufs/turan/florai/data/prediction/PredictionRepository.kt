@@ -93,6 +93,8 @@ class PredictionRepository(
                         "Görsel kaydedilemedi. Storage ayarlarını ve internet bağlantını kontrol et."
                     detail == "Prediction history is not available." ->
                         "Tahmin geçmişi şu anda alınamıyor."
+                    detail == "Prediction history index is not available." ->
+                        "Tahmin geçmişi için Firestore index'i henüz hazır değil."
                     detail == "Firestore is not available." ->
                         "Firestore bağlantısı şu anda kullanılamıyor."
                     else -> when (error.code()) {

@@ -76,6 +76,7 @@ internal fun HistoryItemCard(
             PredictionHistoryImage(
                 imagePath = item.imagePath,
                 imageUrl = item.imageUrl,
+                contentDescription = "${item.displayName} tahmin görseli",
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)

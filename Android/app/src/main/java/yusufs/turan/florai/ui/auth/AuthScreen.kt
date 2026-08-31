@@ -2,11 +2,17 @@ package yusufs.turan.florai.ui.auth
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,7 +54,8 @@ fun AuthScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 24.dp),
+                .imePadding()
+                .padding(horizontal = 20.dp),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -56,44 +63,59 @@ fun AuthScreen(
                     CircularProgressIndicator()
                 }
 
-                currentUser?.emailVerified == false -> {
-                    EmailVerificationContent(
-                        email = currentUser.email,
-                        isSubmitting = uiState.isSubmitting,
-                        onRefreshVerification = onRefreshVerification,
-                        onResendVerification = onResendVerification,
-                        onSignOut = onSignOut
-                    )
-                }
+                else -> {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .widthIn(max = 420.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 2.dp
+                    ) {
+                        Box(modifier = Modifier.padding(20.dp)) {
+                            when {
+                                currentUser?.emailVerified == false -> {
+                                    EmailVerificationContent(
+                                        email = currentUser.email,
+                                        isSubmitting = uiState.isSubmitting,
+                                        onRefreshVerification = onRefreshVerification,
+                                        onResendVerification = onResendVerification,
+                                        onSignOut = onSignOut
+                                    )
+                                }
 
-                screenMode == AuthScreenMode.Login -> {
-                    LoginContent(
-                        isSubmitting = uiState.isSubmitting,
-                        onSignIn = onSignIn,
-                        onForgotPasswordClick = {
-                            screenMode = AuthScreenMode.ForgotPassword
-                        },
-                        onRegisterClick = {
-                            screenMode = AuthScreenMode.Register
+                                screenMode == AuthScreenMode.Login -> {
+                                    LoginContent(
+                                        isSubmitting = uiState.isSubmitting,
+                                        onSignIn = onSignIn,
+                                        onForgotPasswordClick = {
+                                            screenMode = AuthScreenMode.ForgotPassword
+                                        },
+                                        onRegisterClick = {
+                                            screenMode = AuthScreenMode.Register
+                                        }
+                                    )
+                                }
+
+                                screenMode == AuthScreenMode.Register -> {
+                                    RegisterContent(
+                                        isSubmitting = uiState.isSubmitting,
+                                        onRegister = onRegister,
+                                        onBack = { screenMode = AuthScreenMode.Login },
+                                        onLoginClick = { screenMode = AuthScreenMode.Login }
+                                    )
+                                }
+
+                                screenMode == AuthScreenMode.ForgotPassword -> {
+                                    ForgotPasswordContent(
+                                        isSubmitting = uiState.isSubmitting,
+                                        onForgotPassword = onForgotPassword,
+                                        onBack = { screenMode = AuthScreenMode.Login }
+                                    )
+                                }
+                            }
                         }
-                    )
-                }
-
-                screenMode == AuthScreenMode.Register -> {
-                    RegisterContent(
-                        isSubmitting = uiState.isSubmitting,
-                        onRegister = onRegister,
-                        onBack = { screenMode = AuthScreenMode.Login },
-                        onLoginClick = { screenMode = AuthScreenMode.Login }
-                    )
-                }
-
-                screenMode == AuthScreenMode.ForgotPassword -> {
-                    ForgotPasswordContent(
-                        isSubmitting = uiState.isSubmitting,
-                        onForgotPassword = onForgotPassword,
-                        onBack = { screenMode = AuthScreenMode.Login }
-                    )
+                    }
                 }
             }
         }

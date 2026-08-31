@@ -4,6 +4,7 @@ from .model_service import FlowerClassifier
 from .repositories.flower_repository import FlowerRepository
 from .repositories.prediction_history_repository import PredictionHistoryRepository
 from .repositories.user_repository import UserRepository
+from .services.firebase_auth_service import FirebaseAuthService
 from .services.prediction_history_service import PredictionHistoryService
 from .services.prediction_service import PredictionService
 from .services.user_service import UserService
@@ -30,6 +31,10 @@ def get_storage_service(request: Request) -> StorageService:
     return request.app.state.storage_service
 
 
+def get_firebase_auth_service(request: Request) -> FirebaseAuthService:
+    return request.app.state.firebase_auth_service
+
+
 def get_prediction_service(
     classifier: FlowerClassifier = Depends(get_classifier),
     flower_repository: FlowerRepository = Depends(get_flower_repository),
@@ -54,11 +59,13 @@ def get_user_service(
         get_prediction_history_repository
     ),
     storage_service: StorageService = Depends(get_storage_service),
+    firebase_auth_service: FirebaseAuthService = Depends(get_firebase_auth_service),
 ) -> UserService:
     return UserService(
         user_repository=user_repository,
         history_repository=history_repository,
         storage_service=storage_service,
+        firebase_auth_service=firebase_auth_service,
     )
 
 

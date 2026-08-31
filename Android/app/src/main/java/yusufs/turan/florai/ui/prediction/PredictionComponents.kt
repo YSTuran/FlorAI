@@ -88,7 +88,7 @@ internal fun ImagePickerCard(
                 } else {
                     Image(
                         bitmap = previewBitmap,
-                        contentDescription = null,
+                        contentDescription = "Seçilen çiçek görseli",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -265,6 +265,8 @@ internal fun PredictionResultCard(result: PredictionResult) {
             }
 
             if (result.lowConfidence) {
+                val confidenceNote = result.confidenceNote
+                    ?: "Model bu sonuç için yeterince emin değil. Daha net, iyi aydınlatılmış ve çiçeği merkeze alan bir fotoğrafla tekrar deneyebilirsin."
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.errorContainer,
@@ -279,7 +281,7 @@ internal fun PredictionResultCard(result: PredictionResult) {
                             style = MaterialTheme.typography.titleSmall
                         )
                         Text(
-                            text = "Model bu sonuç için yeterince emin değil. Daha net, iyi aydınlatılmış ve çiçeği merkeze alan bir fotoğrafla tekrar deneyebilirsin.",
+                            text = confidenceNote,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }

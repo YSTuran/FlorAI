@@ -13,6 +13,7 @@ class CurrentUser:
     email: str | None
     email_verified: bool
     display_name: str | None = None
+    auth_time: int | None = None
 
 
 async def get_current_user(
@@ -25,6 +26,7 @@ async def get_current_user(
             email=None,
             email_verified=True,
             display_name="Local Dev",
+            auth_time=None,
         )
 
     if not authorization or not authorization.startswith("Bearer "):
@@ -63,4 +65,5 @@ async def get_current_user(
         email=decoded_token.get("email"),
         email_verified=email_verified,
         display_name=decoded_token.get("name"),
+        auth_time=decoded_token.get("auth_time"),
     )

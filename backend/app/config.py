@@ -10,8 +10,10 @@ class Settings:
     backend_root: Path
     model_path: Path
     confidence_threshold: float
+    confidence_margin_threshold: float
     top_k: int
     max_image_size_mb: int
+    account_delete_max_auth_age_seconds: int
     firebase_auth_required: bool
     require_verified_email: bool
     firestore_enabled: bool
@@ -72,8 +74,14 @@ def get_settings() -> Settings:
         backend_root=backend_root,
         model_path=model_path,
         confidence_threshold=float(os.getenv("PREDICTION_CONFIDENCE_THRESHOLD", "0.60")),
+        confidence_margin_threshold=float(
+            os.getenv("PREDICTION_CONFIDENCE_MARGIN_THRESHOLD", "0.15")
+        ),
         top_k=int(os.getenv("PREDICTION_TOP_K", "5")),
         max_image_size_mb=int(os.getenv("MAX_IMAGE_SIZE_MB", "8")),
+        account_delete_max_auth_age_seconds=int(
+            os.getenv("ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS", "300")
+        ),
         firebase_auth_required=_bool_env("FIREBASE_AUTH_REQUIRED", False),
         require_verified_email=_bool_env("REQUIRE_VERIFIED_EMAIL", True),
         firestore_enabled=_bool_env("FIRESTORE_ENABLED", False),

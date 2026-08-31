@@ -80,8 +80,10 @@ GET http://127.0.0.1:8000/health
 APP_NAME=FlorAI Backend
 MODEL_PATH=models/model.pt
 PREDICTION_CONFIDENCE_THRESHOLD=0.60
+PREDICTION_CONFIDENCE_MARGIN_THRESHOLD=0.15
 PREDICTION_TOP_K=5
 MAX_IMAGE_SIZE_MB=8
+ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300
 FIREBASE_AUTH_REQUIRED=true
 REQUIRE_VERIFIED_EMAIL=true
 FIRESTORE_ENABLED=true
@@ -101,7 +103,7 @@ Firestore koleksiyonları:
 - `users/{uid}`: Kullanıcı profil dokümanı
 - `predictionHistory/{predictionId}`: Kullanıcı tahmin geçmişi
 
-Storage path yapisi:
+Storage path yapısı:
 
 ```text
 prediction-images/{uid}/{predictionId}.jpg
@@ -117,6 +119,22 @@ bulunabilecek `imageUrl` alanı yalnızca geriye dönük uyumluluk için kullan�
 mevcut tahmin geçmişi kaydı sayısını temsil eder. Geçmiş kaydı silindikçe bu
 değer backend tarafında senkron tutulur.
 
+Hesap silme işlemi backend üzerinden yürütülür. Mobil uygulama önce kullanıcının
+şifresini tekrar doğrular ve taze Firebase ID token ile `DELETE /users/me`
+isteği gönderir. Backend kullanıcının tahmin geçmişini, profil dokümanını,
+Storage görsellerini ve Firebase Auth hesabını temizlemeye çalışır. Production
+ortamında bu endpoint yakın tarihli doğrulama gerektirir; varsayılan süre
+`ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300` değeridir.
+
+## Model Güvenilirliği
+
+Backend tahmin sonucunu yalnızca en yüksek skora göre değerlendirmez. En iyi
+tahmin skoru `PREDICTION_CONFIDENCE_THRESHOLD` değerinin altındaysa veya en iyi
+sonuç ile ikinci sonuç arasındaki fark `PREDICTION_CONFIDENCE_MARGIN_THRESHOLD`
+değerinden küçükse yanıt `low_confidence` olarak işaretlenir. Bu durumda mobil
+uygulama kullanıcıya fotoğrafın desteklenen çiçeklerden biri olmayabileceğini
+veya modelin iki sonuç arasında kararsız kaldığını açıklayan bir uyarı gösterir.
+
 ## Çiçek Listesi
 
 Mobil uygulama desteklenen çiçek listesini backend'den alır:
@@ -130,7 +148,7 @@ doküman olursa eğitim sınıflarıyla uyumlu yerel katalog yedek olarak kullan
 
 ## History Sorgusu
 
-Tahmin gecmisi endpointi:
+Tahmin geçmişi endpointi:
 
 ```text
 GET /prediction-history?limit=20
@@ -139,14 +157,14 @@ GET /prediction-history?limit=20&cursor=<nextCursor>
 
 Yanıtta `items` ile birlikte sonraki sayfa varsa `nextCursor` döner.
 
-Tekil tahmin gecmisi detayi:
+Tekil tahmin geçmişi detayı:
 
 ```text
 GET /prediction-history/{prediction_id}
 ```
 
 Backend, kayıtları `userId` filtresi ve `createdAt DESC` sıralaması ile almaya
-çalışır. En iyi performans için Firestore'da şu composite index önerilir:
+çalışır. Production ortamı için Firestore'da şu composite index gereklidir:
 
 ```text
 Collection: predictionHistory
@@ -155,8 +173,9 @@ Fields:
   createdAt Descending
 ```
 
-Index henüz hazır değilse backend küçük ölçekli fallback ile kayıtları alıp
-uygulama tarafında sıralar.
+Index hazır değilse backend tüm kayıtları belleğe alarak sıralamaz; bunun yerine
+net bir hata döndürür ve log yazar. Böylece production ortamında performans
+sorunları gizlenmez.
 
 ## Firebase Rules Deploy
 
@@ -200,7 +219,7 @@ cd Android
 
 ## Render
 
-Render servis ayarlari:
+Render servis ayarları:
 
 ```text
 Root Directory: backend

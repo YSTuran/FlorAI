@@ -66,6 +66,7 @@ fun PredictionHistoryDetailScreen(
             PredictionHistoryImage(
                 imagePath = item.imagePath,
                 imageUrl = item.imageUrl,
+                contentDescription = "${item.displayName} tahmin görseli",
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(4f / 3f),
@@ -89,13 +90,38 @@ fun PredictionHistoryDetailScreen(
                         style = MaterialTheme.typography.headlineSmall
                     )
                     DetailRow(label = "Kesinlik", value = item.confidence.toPercentText())
+                    item.confidenceGap?.let { confidenceGap ->
+                        DetailRow(
+                            label = "En yakın alternatif farkı",
+                            value = confidenceGap.toPercentText()
+                        )
+                    }
                     DetailRow(label = "Model etiketi", value = item.modelLabel)
                     if (item.lowConfidence) {
-                        Text(
-                            text = "Bu kayıt düşük güvenli tahmin olarak işaretlenmiş.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ) {
+                            Text(
+                                text = item.confidenceNote
+                                    ?: "Bu kayıt düşük güvenli tahmin olarak işaretlenmiş.",
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ) {
+                            Text(
+                                text = "Model bu tahminde belirgin bir sonuç üretmiş.",
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
             }

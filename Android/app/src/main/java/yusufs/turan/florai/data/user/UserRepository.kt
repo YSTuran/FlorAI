@@ -6,6 +6,7 @@ import retrofit2.HttpException
 import yusufs.turan.florai.core.network.HttpErrorParser
 import yusufs.turan.florai.data.user.remote.UpdateUserProfileRequestDto
 import yusufs.turan.florai.data.user.remote.UserApi
+import yusufs.turan.florai.domain.user.AccountDeletionResult
 import yusufs.turan.florai.domain.user.UserProfile
 import java.io.IOException
 import java.net.ConnectException
@@ -33,10 +34,10 @@ class UserRepository(
         }
     }
 
-    suspend fun deleteCurrentUserData(): Result<Int> {
+    suspend fun deleteCurrentAccount(): Result<AccountDeletionResult> {
         return withContext(Dispatchers.IO) {
             runCatching {
-                api.deleteCurrentUserData().deletedCount
+                api.deleteCurrentUserData().toDomain()
             }
         }
     }
@@ -56,6 +57,10 @@ class UserRepository(
                         "Profil bilgileri şu anda kullanılamıyor."
                     detail == "User data could not be deleted." ->
                         "Kullanıcı verileri silinemedi. Lütfen tekrar dene."
+                    detail == "Firebase Auth account could not be deleted." ->
+                        "Kullanıcı hesabı silinemedi. Lütfen tekrar dene."
+                    detail == "Recent authentication is required." ->
+                        "Hesabı silmek için şifrenle tekrar doğrulama gerekiyor."
                     detail == "Prediction history is not available." ->
                         "Tahmin geçmişi şu anda temizlenemiyor."
                     detail == "Firestore is not available." ->

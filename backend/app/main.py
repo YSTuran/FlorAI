@@ -9,6 +9,7 @@ from .model_service import FlowerClassifier
 from .repositories.flower_repository import FlowerRepository
 from .repositories.prediction_history_repository import PredictionHistoryRepository
 from .repositories.user_repository import UserRepository
+from .services.firebase_auth_service import FirebaseAuthService
 from .storage_service import StorageService
 
 
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
     app.state.user_repository = UserRepository()
     app.state.prediction_history_repository = PredictionHistoryRepository()
     app.state.storage_service = StorageService()
+    app.state.firebase_auth_service = FirebaseAuthService()
     yield
 
 

@@ -36,32 +36,24 @@ class FirestoreRepository:
         best_prediction: PredictionItem,
         top_predictions: list[PredictionItem],
         low_confidence: bool,
+        confidence_gap: float | None = None,
+        confidence_note: str | None = None,
         prediction_id: str | None = None,
-        image_url: str | None = None,
+        image_path: str | None = None,
     ) -> str | None:
         return self.history.create(
             user=user,
             best_prediction=best_prediction,
             top_predictions=top_predictions,
             low_confidence=low_confidence,
+            confidence_gap=confidence_gap,
+            confidence_note=confidence_note,
             prediction_id=prediction_id,
-            image_url=image_url,
+            image_path=image_path,
         )
 
     def create_prediction_history_id(self) -> str | None:
         return self.history.create_id()
-
-    def update_prediction_history_image_url(
-        self,
-        user: CurrentUser,
-        prediction_id: str | None,
-        image_url: str | None,
-    ) -> None:
-        self.history.update_image_url(
-            user=user,
-            prediction_id=prediction_id,
-            image_url=image_url,
-        )
 
     def list_prediction_history(
         self,

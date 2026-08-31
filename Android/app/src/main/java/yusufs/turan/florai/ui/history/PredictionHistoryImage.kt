@@ -27,7 +27,8 @@ fun PredictionHistoryImage(
     imagePath: String?,
     imageUrl: String?,
     modifier: Modifier = Modifier,
-    emptyText: String = "Görsel bekleniyor"
+    emptyText: String = "Görsel bekleniyor",
+    contentDescription: String? = null
 ) {
     var resolvedImageUrl by remember(imagePath, imageUrl) { mutableStateOf<String?>(null) }
     var didFail by remember(imagePath, imageUrl) { mutableStateOf(false) }
@@ -69,7 +70,7 @@ fun PredictionHistoryImage(
 
     SubcomposeAsyncImage(
         model = url,
-        contentDescription = null,
+        contentDescription = contentDescription,
         modifier = containerModifier,
         contentScale = ContentScale.Crop,
         loading = {

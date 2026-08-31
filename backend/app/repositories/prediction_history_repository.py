@@ -25,11 +25,13 @@ def _history_payload_from_doc(doc) -> dict:
     return {
         "id": doc.id,
         "predictedFlowerId": data.get("predictedFlowerId"),
-        "displayName": data.get("displayName") or "Bilinmeyen cicek",
+        "displayName": data.get("displayName") or "Bilinmeyen çiçek",
         "modelLabel": data.get("modelLabel") or "",
         "classId": int(data.get("classId") or 0),
         "confidence": float(data.get("confidence") or 0),
         "lowConfidence": bool(data.get("lowConfidence") or False),
+        "confidenceGap": data.get("confidenceGap"),
+        "confidenceNote": data.get("confidenceNote"),
         "imagePath": image_path,
         "imageUrl": image_url,
         "topPredictions": data.get("topPredictions") or [],
@@ -50,6 +52,8 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
         best_prediction: PredictionItem,
         top_predictions: list[PredictionItem],
         low_confidence: bool,
+        confidence_gap: float | None = None,
+        confidence_note: str | None = None,
         prediction_id: str | None = None,
         image_path: str | None = None,
     ) -> str | None:
@@ -69,6 +73,8 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                 "classId": best_prediction.classId,
                 "confidence": best_prediction.confidence,
                 "lowConfidence": low_confidence,
+                "confidenceGap": confidence_gap,
+                "confidenceNote": confidence_note,
                 "imagePath": image_path or "",
                 "imageUrl": "",
                 "topPredictions": [
@@ -120,41 +126,16 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                     if len(docs) > bounded_limit and page_docs
                     else None
                 )
-            except FailedPrecondition:
-                logger.warning(
+            except FailedPrecondition as exc:
+                logger.error(
                     "Prediction history composite index is missing. "
-                    "Using in-memory fallback. uid=%s",
+                    "Create an index for userId ASC and createdAt DESC. uid=%s",
                     user.uid,
-                    exc_info=True,
                 )
-                docs = list(query.stream())
-                history_items = sorted(
-                    [_history_payload_from_doc(doc) for doc in docs],
-                    key=lambda item: item.get("createdAt") or "",
-                    reverse=True,
-                )
-                if cursor:
-                    cursor_index = next(
-                        (
-                            index
-                            for index, item in enumerate(history_items)
-                            if item["id"] == cursor
-                        ),
-                        None,
-                    )
-                    if cursor_index is None:
-                        raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail="Prediction history item was not found.",
-                        )
-                    history_items = history_items[cursor_index + 1:]
-
-                next_cursor = (
-                    history_items[bounded_limit - 1]["id"]
-                    if len(history_items) > bounded_limit
-                    else None
-                )
-                history_items = history_items[:bounded_limit]
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Prediction history index is not available.",
+                ) from exc
         except HTTPException:
             raise
         except Exception as exc:
@@ -258,35 +239,6 @@ class PredictionHistoryRepository(FirestoreRepositoryBase):
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Prediction history is not available.",
             ) from exc
-
-    def update_image_url(
-        self,
-        user: CurrentUser,
-        prediction_id: str | None,
-        image_url: str | None,
-    ) -> None:
-        if not self.is_enabled or not prediction_id or not image_url:
-            return
-
-        try:
-            doc_ref = self._client().collection("predictionHistory").document(prediction_id)
-            doc = doc_ref.get()
-            if not doc.exists:
-                return
-
-            data = doc.to_dict() or {}
-            if data.get("userId") != user.uid:
-                return
-
-            doc_ref.set({"imageUrl": image_url}, merge=True)
-        except Exception:
-            logger.warning(
-                "Prediction history imageUrl could not be updated. uid=%s prediction_id=%s",
-                user.uid,
-                prediction_id,
-                exc_info=True,
-            )
-            return
 
     def _ensure_owned_doc(self, doc, user: CurrentUser, action: str) -> None:
         if not doc.exists:

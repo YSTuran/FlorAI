@@ -46,21 +46,31 @@ Example predict response:
   "status": "success",
   "predictionId": null,
   "result": {
-            "flowerId": "papatya",
-            "classId": 0,
-            "modelLabel": "daisy",
-            "name": "Papatya",
-            "scientificName": "Bellis perennis",
-            "confidence": 0.91,
-            "lowConfidence": false,
-            "height": "10-20 cm",
-            "habitats": ["Çayırlar", "yol kenarları"],
-            "bloomMonths": ["Mart", "Nisan", "Mayıs"],
-            "details": "Papatya, ılıman iklimlerde yaygın görülen bir çiçektir.",
-            "extraFacts": ["Güneşli veya yarı gölgeli alanlarda iyi gelişir."]
+    "flowerId": "papatya",
+    "classId": 0,
+    "modelLabel": "daisy",
+    "name": "Papatya",
+    "scientificName": "Bellis perennis",
+    "confidence": 0.91,
+    "lowConfidence": false,
+    "confidenceGap": 0.79,
+    "confidenceNote": null,
+    "height": "10-20 cm",
+    "habitats": ["Çayırlar", "yol kenarları"],
+    "bloomMonths": ["Mart", "Nisan", "Mayıs"],
+    "details": "Papatya, ılıman iklimlerde yaygın görülen bir çiçektir.",
+    "extraFacts": ["Güneşli veya yarı gölgeli alanlarda iyi gelişir."]
   }
 }
 ```
+
+## Confidence Handling
+
+The backend marks a prediction as `low_confidence` when the best score is below
+`PREDICTION_CONFIDENCE_THRESHOLD` or when the best result is too close to the
+second result according to `PREDICTION_CONFIDENCE_MARGIN_THRESHOLD`. In these
+cases the response includes `confidenceNote`, which the mobile app can show as a
+user-facing warning.
 
 ## Firebase Auth
 
@@ -73,6 +83,7 @@ FIREBASE_AUTH_REQUIRED=true
 REQUIRE_VERIFIED_EMAIL=true
 FIRESTORE_ENABLED=true
 FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
+ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300
 FIREBASE_CREDENTIALS_JSON={...}
 ```
 
@@ -117,6 +128,8 @@ Stored fields include:
   "classId": 0,
   "confidence": 0.91,
   "lowConfidence": false,
+  "confidenceGap": 0.79,
+  "confidenceNote": null,
   "imagePath": "prediction-images/firebase_user_uid/prediction_id.jpg",
   "topPredictions": [],
   "source": "mobile",
@@ -148,7 +161,7 @@ GET /prediction-history/{prediction_id}
 ```
 
 The repository queries by `userId` and orders by `createdAt` descending when the
-Firestore index is available. Recommended composite index:
+Firestore index is available. Production expects this composite index:
 
 ```text
 Collection: predictionHistory
@@ -156,6 +169,16 @@ Fields:
   userId Ascending
   createdAt Descending
 ```
+
+If this index is missing, the backend returns a clear service error instead of
+streaming and sorting all user history documents in memory.
+
+## Account Deletion
+
+`DELETE /users/me` deletes the current user's prediction history, profile
+document, Storage images, and Firebase Auth account. In production this endpoint
+requires a recently refreshed Firebase ID token. The mobile app should
+reauthenticate the user with their password before calling it.
 
 ## Tests
 

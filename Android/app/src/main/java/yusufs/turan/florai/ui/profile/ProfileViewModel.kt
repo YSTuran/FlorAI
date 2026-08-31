@@ -139,37 +139,51 @@ class ProfileViewModel @Inject constructor(
                 return@launch
             }
 
-            val dataResult = userRepository.deleteCurrentUserData()
+            val accountResult = userRepository.deleteCurrentAccount()
             if (requestSessionVersion != sessionVersion) {
                 return@launch
             }
 
-            if (dataResult.isFailure) {
+            if (accountResult.isFailure) {
                 _uiState.update {
                     it.copy(
                         isDeletingAccount = false,
-                        errorMessage = dataResult.exceptionOrNull()
+                        errorMessage = accountResult.exceptionOrNull()
                             ?.let(userRepository::getReadableMessage)
                     )
                 }
                 return@launch
             }
 
-            val deleteResult = authRepository.deleteCurrentUser()
+            val backendDeletedAuth = accountResult.getOrNull()?.authDeleted == true
+            if (backendDeletedAuth) {
+                authRepository.signOut()
+                _uiState.update {
+                    it.copy(
+                        profile = null,
+                        isDeletingAccount = false,
+                        errorMessage = null,
+                        successMessage = "Hesap silindi."
+                    )
+                }
+                return@launch
+            }
+
+            val clientDeleteResult = authRepository.deleteCurrentUser()
             if (requestSessionVersion != sessionVersion) {
                 return@launch
             }
 
             _uiState.update {
                 it.copy(
-                    profile = if (deleteResult.isSuccess) null else it.profile,
+                    profile = if (clientDeleteResult.isSuccess) null else it.profile,
                     isDeletingAccount = false,
-                    errorMessage = deleteResult.exceptionOrNull()?.let { error ->
+                    errorMessage = clientDeleteResult.exceptionOrNull()?.let { error ->
                         "Kullanıcı verileri temizlendi ancak hesap silinemedi: " +
                             authRepository.getReadableMessage(error) +
                             " Tekrar deneyebilirsin."
                     },
-                    successMessage = if (deleteResult.isSuccess) {
+                    successMessage = if (clientDeleteResult.isSuccess) {
                         "Hesap silindi."
                     } else {
                         null

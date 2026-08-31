@@ -8,6 +8,8 @@ data class PredictionResult(
     val scientificName: String?,
     val confidence: Float,
     val lowConfidence: Boolean,
+    val confidenceGap: Float?,
+    val confidenceNote: String?,
     val height: String?,
     val habitats: List<String>,
     val bloomMonths: List<String>,

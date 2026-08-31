@@ -4,6 +4,7 @@ from ..auth import CurrentUser
 from ..config import get_settings
 from ..flower_catalog import get_flower_by_model_label
 from ..model_service import FlowerClassifier
+from ..prediction_confidence import assess_prediction_confidence
 from ..repositories.flower_repository import FlowerRepository
 from ..repositories.prediction_history_repository import PredictionHistoryRepository
 from ..repositories.user_repository import UserRepository
@@ -59,7 +60,11 @@ class PredictionService:
         if flower is None:
             flower = get_flower_by_model_label(best_prediction.modelLabel)
 
-        low_confidence = best_prediction.confidence < settings.confidence_threshold
+        confidence_assessment = assess_prediction_confidence(
+            predictions,
+            min_confidence=settings.confidence_threshold,
+            min_confidence_gap=settings.confidence_margin_threshold,
+        )
         prediction_id = self._history_repository.create_id()
         image_path = self._storage_service.upload_prediction_image(
             user=user,
@@ -74,7 +79,9 @@ class PredictionService:
                 user=user,
                 best_prediction=best_prediction,
                 top_predictions=predictions,
-                low_confidence=low_confidence,
+                low_confidence=confidence_assessment.low_confidence,
+                confidence_gap=confidence_assessment.confidence_gap,
+                confidence_note=confidence_assessment.confidence_note,
                 prediction_id=prediction_id,
                 image_path=image_path,
             )
@@ -89,7 +96,9 @@ class PredictionService:
         self._user_repository.record_prediction(user)
 
         return PredictResponse(
-            status="low_confidence" if low_confidence else "success",
+            status="low_confidence"
+            if confidence_assessment.low_confidence
+            else "success",
             predictionId=prediction_id,
             result=PredictionResult(
                 flowerId=best_prediction.flowerId,
@@ -98,7 +107,9 @@ class PredictionService:
                 name=flower.commonName if flower else best_prediction.displayName,
                 scientificName=flower.scientificName if flower else None,
                 confidence=best_prediction.confidence,
-                lowConfidence=low_confidence,
+                lowConfidence=confidence_assessment.low_confidence,
+                confidenceGap=confidence_assessment.confidence_gap,
+                confidenceNote=confidence_assessment.confidence_note,
                 height=flower.height if flower else None,
                 habitats=flower.habitats if flower else [],
                 bloomMonths=flower.bloomMonths if flower else [],
