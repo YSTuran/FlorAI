@@ -1,10 +1,18 @@
 # FlorAI Backend
 
-FastAPI backend for classifying flower images with the trained Ultralytics model.
-It also integrates with Firebase Auth, Firestore, and Firebase Storage for the
-mobile app flow.
+FlorAI backend, mobil uygulamadan gelen çiçek görsellerini sınıflandırmak için
+FastAPI ile geliştirilmiş bir servistir. Eğitilmiş Ultralytics YOLO
+classification modelini kullanır ve Firebase Auth, Firestore ile Firebase
+Storage servisleriyle entegre çalışır.
 
-## Current Model Classes
+Backend'in temel sorumluluğu mobil uygulamadan gelen istekleri doğrulamak,
+görseli modele göndermek, tahmin sonucunu üretmek, ilgili kullanıcıya ait tahmin
+geçmişini Firestore'a kaydetmek ve tahmin görselini Firebase Storage üzerinde
+saklamaktır.
+
+## Model Sınıfları
+
+Eğitilen modelde bulunan sınıflar ve uygulamadaki karşılıkları:
 
 - `daisy` -> Papatya
 - `dandelion` -> Karahindiba
@@ -12,39 +20,30 @@ mobile app flow.
 - `sunflowers` -> Ayçiçeği
 - `tulips` -> Lale
 
-## Flower Catalog Endpoint
+## API Yapısı
 
-The mobile app can fetch the supported flower catalog from the backend:
+Backend aşağıdaki temel işlevleri sağlar:
 
-```text
-GET /flowers
-```
+- Uygulama ve sağlık bilgisi döndürme
+- Desteklenen çiçek listesini sunma
+- Görsel üzerinden çiçek tahmini yapma
+- Kullanıcının tahmin geçmişini listeleme
+- Tekil tahmin geçmişi detayını döndürme
+- Tahmin geçmişi kaydı silme
+- Kullanıcı profilini görüntüleme ve güncelleme
+- Kullanıcı hesabını ve ilişkili verileri silme
 
-When Firestore is enabled, the backend reads `flowers/{flowerId}` documents. If a
-document is missing, the local catalog matching the trained model classes is used
-as a fallback.
+## Tahmin Yanıtı
 
-## Local Run
+Tahmin sonucunda backend, kullanıcıya gösterilecek ana sonucu ve modelin güven
+durumunu içeren bir yanıt üretir.
 
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Open:
-
-- `GET http://127.0.0.1:8000/health`
-- `POST http://127.0.0.1:8000/predict` with form-data field `image`
-
-Example predict response:
+Örnek tahmin yanıtı:
 
 ```json
 {
   "status": "success",
-  "predictionId": null,
+  "predictionId": "prediction_id",
   "result": {
     "flowerId": "papatya",
     "classId": 0,
@@ -64,60 +63,47 @@ Example predict response:
 }
 ```
 
-## Confidence Handling
+## Model Güven Değerlendirmesi
 
-The backend marks a prediction as `low_confidence` when the best score is below
-`PREDICTION_CONFIDENCE_THRESHOLD` or when the best result is too close to the
-second result according to `PREDICTION_CONFIDENCE_MARGIN_THRESHOLD`. In these
-cases the response includes `confidenceNote`, which the mobile app can show as a
-user-facing warning.
+Backend tahmin sonucunu yalnızca en yüksek skora göre değerlendirmez. En iyi
+tahmin skoru belirlenen güven eşiğinin altındaysa veya en iyi sonuç ile ikinci
+sonuç arasındaki fark yeterince yüksek değilse tahmin `low_confidence` olarak
+işaretlenir.
+
+Bu durumda yanıt içinde `confidenceNote` alanı gönderilir. Mobil uygulama bu
+alanı kullanarak kullanıcıya modelin yeterince emin olmadığını, görselin
+desteklenen çiçeklerden biri olmayabileceğini veya daha net bir fotoğrafla tekrar
+denenmesi gerektiğini açıklar.
 
 ## Firebase Auth
 
-Local development defaults to `FIREBASE_AUTH_REQUIRED=false`.
+Backend, mobil uygulamadan gelen Firebase ID token bilgisini doğrular. Böylece
+kullanıcının yalnızca kendi profiline, kendi tahmin geçmişine ve kendi görsel
+kayıtlarına erişmesi sağlanır.
 
-For production:
-
-```text
-FIREBASE_AUTH_REQUIRED=true
-REQUIRE_VERIFIED_EMAIL=true
-FIRESTORE_ENABLED=true
-FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
-ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300
-FIREBASE_CREDENTIALS_JSON={...}
-```
-
-The mobile app should send the Firebase ID token in the request header:
-
-```text
-Authorization: Bearer <firebase_id_token>
-```
+E-posta doğrulaması aktif olduğunda doğrulanmamış kullanıcıların tahmin ve geçmiş
+gibi korumalı endpointleri kullanmasına izin verilmez.
 
 ## Firestore
 
-When `FIRESTORE_ENABLED=true`, the backend reads flower details from:
+Backend Firestore üzerinde üç temel koleksiyonla çalışır:
 
 ```text
 flowers/{flowerId}
-```
-
-The expected flower document IDs are:
-
-```text
-papatya
-karahindiba
-gul
-aycicegi
-lale
-```
-
-Each successful `/predict` request also creates a history document:
-
-```text
+users/{uid}
 predictionHistory/{predictionId}
 ```
 
-Stored fields include:
+`flowers` koleksiyonu çiçek bilgilerini tutar. `users` koleksiyonu kullanıcı
+profil bilgilerini ve mevcut tahmin geçmişi sayısını içerir. `predictionHistory`
+koleksiyonu ise kullanıcının yaptığı tahminleri, tahmin skorlarını, Storage
+görsel yolunu ve oluşturulma tarihini saklar.
+
+Tahmin geçmişi kayıtları kullanıcıya göre filtrelenir ve oluşturulma tarihine
+göre yeniden eskiye sıralanır. Bu sorgu için Firestore üzerinde `userId` ve
+`createdAt` alanlarını kullanan composite index oluşturulmuştur.
+
+Örnek tahmin geçmişi dokümanı:
 
 ```json
 {
@@ -137,72 +123,35 @@ Stored fields include:
 }
 ```
 
-`users/{uid}.predictionCount` represents the current number of prediction history
-records. Deleting one or all history records updates this value.
-
-The response `predictionId` is `null` while Firestore is disabled. It contains the
-created history document ID when Firestore is enabled.
-
-## Prediction History Query
-
-The history endpoint supports a bounded limit:
-
-```text
-GET /prediction-history?limit=20
-GET /prediction-history?limit=20&cursor=<nextCursor>
-```
-
-The response includes `nextCursor` when another page is available.
-
-Use the detail endpoint to fetch a single authenticated user's history item:
-
-```text
-GET /prediction-history/{prediction_id}
-```
-
-The repository queries by `userId` and orders by `createdAt` descending when the
-Firestore index is available. Production expects this composite index:
-
-```text
-Collection: predictionHistory
-Fields:
-  userId Ascending
-  createdAt Descending
-```
-
-If this index is missing, the backend returns a clear service error instead of
-streaming and sorting all user history documents in memory.
-
-## Account Deletion
-
-`DELETE /users/me` deletes the current user's prediction history, profile
-document, Storage images, and Firebase Auth account. In production this endpoint
-requires a recently refreshed Firebase ID token. The mobile app should
-reauthenticate the user with their password before calling it.
-
-## Tests
-
-```powershell
-cd backend
-python -m unittest discover -s tests
-```
-
 ## Firebase Storage
 
-When `FIREBASE_STORAGE_BUCKET` is set, each uploaded prediction image is stored
-under:
+Tahmin sırasında kullanılan görseller Firebase Storage üzerinde kullanıcıya ait
+bir klasör altında saklanır:
 
 ```text
 prediction-images/{uid}/{predictionId}.{extension}
 ```
 
-The Storage object path is written to `predictionHistory.imagePath`. The mobile
-app resolves that path through Firebase Storage SDK and loads the image with
-Coil. Older `predictionHistory.imageUrl` values are still supported for backward
-compatibility. Deleting a history item also attempts to remove its Storage image.
+Mobil uygulama Storage'a doğrudan yazmaz. Görsel backend'e gönderilir, backend
+Firebase Admin SDK ile Storage'a yükleme yapar ve Firestore tahmin geçmişi
+kaydına `imagePath` alanını yazar. Mobil uygulama daha sonra bu yolu Firebase
+Storage SDK ile okuyarak görseli ekranda gösterir.
 
-## Render Start Command
+## Hesap Silme
 
-```text
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
+Kullanıcı hesabını silmek istediğinde mobil uygulama önce şifreyle yeniden
+doğrulama yapar. Ardından backend üzerinden hesap silme isteği gönderilir.
+Backend bu işlem sırasında kullanıcının tahmin geçmişini, profil dokümanını,
+Storage üzerindeki görsellerini ve Firebase Auth hesabını temizlemeye çalışır.
+
+Bu yaklaşım, kullanıcıya ait verilerin tek merkezden ve kontrollü biçimde
+silinmesini sağlar.
+
+## Testler
+
+Backend tarafında temel unit testler bulunmaktadır. Bu testlerde model sınıf
+eşleşmeleri, çiçek katalog bilgileri, tahmin güven değerlendirmesi ve hesap silme
+servis akışı kontrol edilir.
+
+Test kapsamı ileride prediction endpointleri, repository hata durumları ve
+Firebase entegrasyon senaryoları ile genişletilebilir.

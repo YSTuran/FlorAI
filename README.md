@@ -1,22 +1,28 @@
 # FlorAI
 
 FlorAI, kullanıcının kameradan çektiği veya galeriden seçtiği çiçek fotoğrafını
-sınıflandıran mobil + backend tabanlı bir uygulamadır. Backend FastAPI ile
-çalışır, eğitilmiş Ultralytics YOLO classification modelini kullanır ve Firebase
-Auth, Firestore, Storage servisleriyle entegre olur.
+sınıflandıran mobil + backend tabanlı bir uygulamadır. Mobil uygulama Kotlin ve
+Jetpack Compose ile geliştirilmiştir. Backend tarafında FastAPI kullanılır ve
+eğitilmiş Ultralytics YOLO classification modeli üzerinden tahmin yapılır.
+
+Proje; kullanıcı kimlik doğrulama, e-posta doğrulama, profil yönetimi, çiçek
+tahmini, tahmin geçmişi, Firebase Storage üzerinde görsel saklama ve Firestore
+üzerinden veri yönetimi gibi temel akışları içerir.
 
 ## Özellikler
 
-- Firebase Authentication ile kayıt, giriş, çıkış
+- Firebase Authentication ile kayıt, giriş ve çıkış
 - E-posta doğrulaması ve şifremi unuttum akışı
-- Doğrulama tamamlandıktan sonra `users/{uid}` profil dokümanı oluşturma
+- Doğrulama tamamlandıktan sonra kullanıcı profil dokümanı oluşturma
 - CameraX ile uygulama içinden fotoğraf çekme
 - Photo Picker ile galeriden görsel seçme
 - Backend üzerinden çiçek tahmini alma
-- Desteklenen çiçek listesini backend üzerinden alma
-- Tahmin geçmişini Firestore üzerinden listeleme
-- Tahmin görsellerini Firebase Storage'da saklama
-- Tek tahmin veya tüm geçmişi silme
+- Desteklenen çiçek listesini backend üzerinden görüntüleme
+- Tahmin geçmişini listeleme ve detaylarını inceleme
+- Tahmin görsellerini Firebase Storage üzerinde saklama
+- Tek tahmin kaydını veya tüm geçmişi silme
+- Hesap silme işleminde kullanıcı verilerini ve Firebase Auth hesabını temizleme
+- Düşük güvenli tahminlerde kullanıcıya açıklayıcı uyarı gösterme
 
 ## Teknolojiler
 
@@ -32,6 +38,7 @@ Mobil:
 - Firebase Auth
 - Firebase Storage SDK
 - Coil
+- Hilt
 
 Backend:
 
@@ -58,42 +65,18 @@ FlorAI/
   firebase.json     Firebase rules deploy ayarları
 ```
 
-## Backend Çalıştırma
+## Genel Mimari
 
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+Mobil uygulama, kullanıcının seçtiği veya kamera ile çektiği görseli backend'e
+gönderir. Backend görseli modelden geçirerek çiçek sınıfını tahmin eder ve
+tahmin sonucunu mobil uygulamaya döndürür. Başarılı tahminlerde sonuç Firestore
+üzerindeki tahmin geçmişine kaydedilir, görsel ise Firebase Storage altında
+saklanır.
 
-Temel kontrol:
-
-```text
-GET http://127.0.0.1:8000/health
-```
-
-## Backend Ortam Değişkenleri
-
-```text
-APP_NAME=FlorAI Backend
-MODEL_PATH=models/model.pt
-PREDICTION_CONFIDENCE_THRESHOLD=0.60
-PREDICTION_CONFIDENCE_MARGIN_THRESHOLD=0.15
-PREDICTION_TOP_K=5
-MAX_IMAGE_SIZE_MB=8
-ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300
-FIREBASE_AUTH_REQUIRED=true
-REQUIRE_VERIFIED_EMAIL=true
-FIRESTORE_ENABLED=true
-FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app
-FIREBASE_SERVICE_ACCOUNT_PATH=secrets/firebase-admin.json
-```
-
-Render tarafında `FIREBASE_SERVICE_ACCOUNT_PATH` genelde secret file ile
-`/etc/secrets/firebase-admin.json` olarak tanımlanır. Firebase Admin SDK dosyası
-repo'ya eklenmemelidir.
+Kimlik doğrulama Firebase Authentication üzerinden yapılır. Mobil uygulama
+backend isteklerinde Firebase ID token gönderir. Backend bu tokenı Firebase
+Admin SDK ile doğrular ve kullanıcının yalnızca kendi verileri üzerinde işlem
+yapmasını sağlar.
 
 ## Firebase Yapısı
 
@@ -109,136 +92,59 @@ Storage path yapısı:
 prediction-images/{uid}/{predictionId}.jpg
 ```
 
-Mobil uygulama Storage'a doğrudan yazmaz. Fotoğraf backend'e gider, backend
-Firebase Admin SDK ile Storage'a yükler ve Firestore history kaydına Storage
-nesne yolunu `imagePath` olarak yazar. Mobil uygulama bu yolu Firebase Storage
-SDK ile yetkili şekilde okuyup görseli Coil ile yükler. Eski kayıtlarda
-bulunabilecek `imageUrl` alanı yalnızca geriye dönük uyumluluk için kullanılır.
+Mobil uygulama Storage'a doğrudan yazmaz. Fotoğraf backend'e gönderilir, backend
+Firebase Admin SDK ile görseli Storage'a yükler ve Firestore history kaydına
+Storage nesne yolunu `imagePath` olarak yazar. Mobil uygulama bu yolu Firebase
+Storage SDK ile yetkili şekilde okuyup görseli Coil ile gösterir.
 
-`users/{uid}.predictionCount` alanı toplam tahmin sayısından ziyade kullanıcının
-mevcut tahmin geçmişi kaydı sayısını temsil eder. Geçmiş kaydı silindikçe bu
-değer backend tarafında senkron tutulur.
-
-Hesap silme işlemi backend üzerinden yürütülür. Mobil uygulama önce kullanıcının
-şifresini tekrar doğrular ve taze Firebase ID token ile `DELETE /users/me`
-isteği gönderir. Backend kullanıcının tahmin geçmişini, profil dokümanını,
-Storage görsellerini ve Firebase Auth hesabını temizlemeye çalışır. Production
-ortamında bu endpoint yakın tarihli doğrulama gerektirir; varsayılan süre
-`ACCOUNT_DELETE_MAX_AUTH_AGE_SECONDS=300` değeridir.
+`users/{uid}.predictionCount` alanı kullanıcının mevcut tahmin geçmişi kaydı
+sayısını temsil eder. Geçmiş kaydı silindikçe bu değer backend tarafında senkron
+tutulur.
 
 ## Model Güvenilirliği
 
 Backend tahmin sonucunu yalnızca en yüksek skora göre değerlendirmez. En iyi
-tahmin skoru `PREDICTION_CONFIDENCE_THRESHOLD` değerinin altındaysa veya en iyi
-sonuç ile ikinci sonuç arasındaki fark `PREDICTION_CONFIDENCE_MARGIN_THRESHOLD`
-değerinden küçükse yanıt `low_confidence` olarak işaretlenir. Bu durumda mobil
-uygulama kullanıcıya fotoğrafın desteklenen çiçeklerden biri olmayabileceğini
-veya modelin iki sonuç arasında kararsız kaldığını açıklayan bir uyarı gösterir.
+tahmin skoru belirlenen güven eşiğinin altındaysa veya en iyi sonuç ile ikinci
+sonuç arasındaki fark düşükse yanıt `low_confidence` olarak işaretlenir.
 
-## Çiçek Listesi
+Bu durumda mobil uygulama kullanıcıya modelin yeterince emin olmadığını, görselin
+desteklenen çiçeklerden biri olmayabileceğini veya fotoğrafın daha net çekilmesi
+gerektiğini açıklayan bir uyarı gösterir.
 
-Mobil uygulama desteklenen çiçek listesini backend'den alır:
+## Tahmin Geçmişi
 
-```text
-GET /flowers
-```
+Tahmin geçmişi, kullanıcı bazlı olarak Firestore üzerinde tutulur. Geçmiş listesi
+sayfalama destekler ve her kayıt için detay ekranı bulunur. Detay ekranında
+tahmin sonucu, kesinlik skoru, en yakın alternatifle skor farkı ve tüm sınıf
+skorları görüntülenebilir.
 
-Backend, Firestore'daki `flowers/{flowerId}` dokümanlarını kullanır. Eksik
-doküman olursa eğitim sınıflarıyla uyumlu yerel katalog yedek olarak kullanılır.
+Firestore tarafında tahmin geçmişi için `userId` ve `createdAt` alanlarını
+kullanan composite index oluşturulmuştur. Böylece kayıtlar kullanıcıya göre
+filtrelenip tarihe göre sıralı şekilde alınabilir.
 
-## History Sorgusu
+## Güvenlik
 
-Tahmin geçmişi endpointi:
+Firestore kuralları, kullanıcının yalnızca kendi profilini ve kendi tahmin
+geçmişini okuyabileceği şekilde düzenlenmiştir. Yazma ve silme işlemleri mobil
+uygulamadan doğrudan yapılmaz; bu işlemler backend üzerinden Firebase Admin SDK
+ile gerçekleştirilir.
 
-```text
-GET /prediction-history?limit=20
-GET /prediction-history?limit=20&cursor=<nextCursor>
-```
-
-Yanıtta `items` ile birlikte sonraki sayfa varsa `nextCursor` döner.
-
-Tekil tahmin geçmişi detayı:
-
-```text
-GET /prediction-history/{prediction_id}
-```
-
-Backend, kayıtları `userId` filtresi ve `createdAt DESC` sıralaması ile almaya
-çalışır. Production ortamı için Firestore'da şu composite index gereklidir:
-
-```text
-Collection: predictionHistory
-Fields:
-  userId Ascending
-  createdAt Descending
-```
-
-Index hazır değilse backend tüm kayıtları belleğe alarak sıralamaz; bunun yerine
-net bir hata döndürür ve log yazar. Böylece production ortamında performans
-sorunları gizlenmez.
-
-## Firebase Rules Deploy
-
-```powershell
-firebase deploy --only firestore,storage
-```
-
-## Android Çalıştırma
-
-Local backend ile:
-
-```powershell
-cd Android
-.\gradlew.bat :app:assembleLocalDebug
-```
-
-Render backend ile:
-
-```powershell
-cd Android
-.\gradlew.bat :app:assembleRenderDebug
-```
-
-Build flavor API adresleri `Android/app/build.gradle.kts` içinde tutulur.
+Storage kuralları da tahmin görsellerinin yalnızca ilgili kullanıcı tarafından
+okunmasına izin verir. Görsel yükleme ve silme işlemleri backend sorumluluğunda
+tutulur.
 
 ## Testler
 
-Backend unit testleri:
+Projede backend ve mobil taraf için temel unit testler eklenmiştir. Backend
+tarafında çiçek katalog eşleşmeleri, model güven değerlendirmesi ve hesap silme
+servisi test edilir. Mobil tarafta auth doğrulama kuralları, profil ismi çözümleme
+ve DTO-domain dönüşümleri kontrol edilir.
 
-```powershell
-cd backend
-python -m unittest discover -s tests
-```
+## Geliştirilebilir Alanlar
 
-Android unit testleri:
-
-```powershell
-cd Android
-.\gradlew.bat :app:testLocalDebugUnitTest
-```
-
-## Render
-
-Render servis ayarları:
-
-```text
-Root Directory: backend
-Build Command: pip install -r requirements.txt
-Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-Deploy sonrası kontrol:
-
-```text
-GET https://florai-jd3v.onrender.com/health
-```
-
-Beklenen alanlar:
-
-```json
-{
-  "modelLoaded": true,
-  "firestoreEnabled": true,
-  "storageEnabled": true
-}
-```
+- Desteklenen çiçek sınıfı sayısı artırılabilir.
+- Model daha geniş ve dengeli bir veri setiyle yeniden eğitilebilir.
+- Desteklenmeyen çiçek veya çiçek olmayan görseller için daha gelişmiş kontrol
+  mekanizması eklenebilir.
+- Uygulama için daha kapsamlı UI testleri ve uçtan uca testler yazılabilir.
+- Üretim ortamı için daha detaylı loglama ve hata izleme sistemi kurulabilir.
